@@ -133,8 +133,9 @@ export function filterAndProcessSchedule(
     : inp.subjects;
 
   const processWeek = (daysRaw: KPIDaySchedule[], weekNum: 1 | 2): WeekSchedule => {
-    const baseDate = weekNum === 1 ? new Date(2026, 8, 1) : new Date(2026, 8, 8);
-    const dateRange = weekNum === 1 ? '01.09 - 07.09.2026' : '08.09 - 14.09.2026';
+    // 2026 calendar: Week 1 Monday is 31.08.2026, Week 2 Monday is 07.09.2026
+    const baseMonday = weekNum === 1 ? new Date(2026, 7, 31) : new Date(2026, 8, 7);
+    const dateRange = weekNum === 1 ? '31.08 - 05.09.2026' : '07.09 - 12.09.2026';
 
     const daysOrder = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     const days: DaySchedule[] = daysOrder.map((dayKey, idx) => {
@@ -145,8 +146,8 @@ export function filterAndProcessSchedule(
         dayIndex: idx + 1,
       };
 
-      const dayDate = new Date(baseDate);
-      dayDate.setDate(baseDate.getDate() + idx);
+      const dayDate = new Date(baseMonday);
+      dayDate.setDate(baseMonday.getDate() + idx);
       const dateFormatted = `${String(dayDate.getDate()).padStart(2, '0')}.${String(
         dayDate.getMonth() + 1
       ).padStart(2, '0')}`;
