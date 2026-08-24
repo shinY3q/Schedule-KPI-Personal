@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Bell, User, Check, RefreshCw, Sun, Moon, Laptop } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell, User, Check, RefreshCw, Sun, Moon, Laptop, CheckCheck } from 'lucide-react';
 import type { INPData } from '../types/inp';
 import { useTheme } from '../context/ThemeContext';
 
@@ -19,28 +19,47 @@ export const Header: React.FC<HeaderProps> = ({
     return localStorage.getItem('kpi_notification_read') !== 'true';
   });
   const { theme, setTheme } = useTheme();
+  const notificationRef = useRef<HTMLDivElement>(null);
   
   const [spinClass, setSpinClass] = useState('');
-  React.useEffect(() => {
+  useEffect(() => {
     if (isRefreshing) {
       setSpinClass('animate-spin text-blue-600 dark:text-blue-400');
     }
   }, [isRefreshing]);
+
+  // Handle clicking outside notification popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
+
+  const markAsRead = () => {
+    setHasUnreadNotification(false);
+    localStorage.setItem('kpi_notification_read', 'true');
+  };
+
   const handleToggleNotifications = () => {
     const nextState = !showNotifications;
     setShowNotifications(nextState);
-    if (hasUnreadNotification) {
-      setHasUnreadNotification(false);
-      localStorage.setItem('kpi_notification_read', 'true');
+    if (nextState || hasUnreadNotification) {
+      markAsRead();
     }
   };
 
   const handleCloseNotifications = () => {
     setShowNotifications(false);
-    if (hasUnreadNotification) {
-      setHasUnreadNotification(false);
-      localStorage.setItem('kpi_notification_read', 'true');
-    }
+    markAsRead();
   };
 
   return (
@@ -119,7 +138,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* Notifications */}
-        <div className="relative">
+        <div className="relative" ref={notificationRef}>
           <button
             onClick={handleToggleNotifications}
             title="Сповіщення"
@@ -134,7 +153,13 @@ export const Header: React.FC<HeaderProps> = ({
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <span className="font-bold text-sm text-slate-800 dark:text-slate-100">Сповіщення</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-slate-800 dark:text-slate-100">Сповіщення</span>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <CheckCheck className="w-3 h-3" />
+                    <span>Прочитано</span>
+                  </span>
+                </div>
                 <span
                   onClick={handleCloseNotifications}
                   className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 cursor-pointer"
