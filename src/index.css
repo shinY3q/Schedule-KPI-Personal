@@ -158,8 +158,8 @@ body {
   width: 10px;
   height: 10px;
   background-color: currentColor;
-  -webkit-mask: url('./assets/arrow.png') no-repeat center / contain;
-  mask: url('./assets/arrow.png') no-repeat center / contain;
+  -webkit-mask: url('../arrow.png') no-repeat center / contain;
+  mask: url('../arrow.png') no-repeat center / contain;
   flex-shrink: 0;
   vertical-align: middle;
 }

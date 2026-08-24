@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Upload, FileText, Sparkles, ShieldCheck } from 'lucide-react';
 import type { INPData } from '../types/inp';
 import { parsePdfINP } from '../services/pdfParser';
-import kpiLogoLight from '../assets/KPI-1.png';
-import kpiLogoDark from '../assets/KPI-2-black-theme.png';
 
 interface LoginViewProps {
   onLoginSuccess: (inp: INPData) => void;
@@ -57,8 +55,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
           {/* Theme-responsive KPI Logo */}
           <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-800 p-2 sm:p-2.5 flex items-center justify-center shadow-2xl border border-white/30 dark:border-slate-700 mb-4 sm:mb-5 flex-shrink-0 transition-transform duration-300 hover:scale-105">
-            <img src={kpiLogoLight} alt="КПІ ім. Ігоря Сікорського" className="w-full h-full object-contain dark:hidden" />
-            <img src={kpiLogoDark} alt="КПІ ім. Ігоря Сікорського" className="w-full h-full object-contain hidden dark:block" />
+            <img src={`${import.meta.env.BASE_URL}KPI-1.png`} alt="КПІ ім. Ігоря Сікорського" className="w-full h-full object-contain dark:hidden" />
+            <img src={`${import.meta.env.BASE_URL}KPI-2-black-theme.png`} alt="КПІ ім. Ігоря Сікорського" className="w-full h-full object-contain hidden dark:block" />
           </div>
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[11px] sm:text-xs font-semibold text-blue-200 backdrop-blur-md mb-2 sm:mb-3">

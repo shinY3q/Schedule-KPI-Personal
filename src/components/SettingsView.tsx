@@ -10,8 +10,6 @@ import {
 import type { INPData } from '../types/inp';
 import { parsePdfINP } from '../services/pdfParser';
 import { useTheme } from '../context/ThemeContext';
-import kpiLogoLight from '../assets/KPI-1.png';
-import kpiLogoDark from '../assets/KPI-2-black-theme.png';
 
 interface SettingsViewProps {
   inp: INPData;
@@ -245,8 +243,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between items-center text-center space-y-6 transition-all duration-200 hover:shadow-sm">
           <div className="space-y-4 flex flex-col items-center">
             <div className="w-28 h-28 rounded-3xl bg-white dark:bg-slate-800 p-2 flex items-center justify-center shadow-xl border border-slate-200 dark:border-slate-700 transition-transform duration-300 hover:scale-105">
-              <img src={kpiLogoLight} alt="КПІ ім. Ігоря Сікорського" className="w-full h-full object-contain dark:hidden" />
-              <img src={kpiLogoDark} alt="КПІ ім. Ігоря Сікорського" className="w-full h-full object-contain hidden dark:block" />
+              <img src={`${import.meta.env.BASE_URL}KPI-1.png`} alt="КПІ ім. Ігоря Сікорського" className="w-full h-full object-contain dark:hidden" />
+              <img src={`${import.meta.env.BASE_URL}KPI-2-black-theme.png`} alt="КПІ ім. Ігоря Сікорського" className="w-full h-full object-contain hidden dark:block" />
             </div>
 
             <div className="space-y-1">

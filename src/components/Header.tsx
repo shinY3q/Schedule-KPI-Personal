@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Bell, User, Check, RefreshCw, Sun, Moon, Laptop } from 'lucide-react';
 import type { INPData } from '../types/inp';
 import { useTheme } from '../context/ThemeContext';
-import kpiLogoLight from '../assets/KPI-1.png';
-import kpiLogoDark from '../assets/KPI-2-black-theme.png';
 
 interface HeaderProps {
   inp: INPData;
@@ -50,8 +48,8 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2.5 sm:gap-3">
         {/* Mobile-only logo */}
         <div className="md:hidden w-8 h-8 rounded-lg bg-white dark:bg-slate-800 p-0.5 flex items-center justify-center shadow-xs border border-slate-200 dark:border-slate-700 flex-shrink-0">
-          <img src={kpiLogoLight} alt="КПІ" className="w-full h-full object-contain dark:hidden" />
-          <img src={kpiLogoDark} alt="КПІ" className="w-full h-full object-contain hidden dark:block" />
+          <img src={`${import.meta.env.BASE_URL}KPI-1.png`} alt="КПІ" className="w-full h-full object-contain dark:hidden" />
+          <img src={`${import.meta.env.BASE_URL}KPI-2-black-theme.png`} alt="КПІ" className="w-full h-full object-contain hidden dark:block" />
         </div>
 
         <div>

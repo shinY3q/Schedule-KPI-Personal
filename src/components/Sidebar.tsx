@@ -1,7 +1,5 @@
 import React from 'react';
 import { Home, Calendar, BookOpen, Settings, LogOut } from 'lucide-react';
-import kpiLogoLight from '../assets/KPI-1.png';
-import kpiLogoDark from '../assets/KPI-2-black-theme.png';
 
 export type NavTab = 'home' | 'schedule' | 'subjects' | 'settings';
 
@@ -33,8 +31,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Logo Branding with Theme-responsive KPI Logo */}
           <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-md border border-slate-100 dark:border-slate-700 overflow-hidden flex-shrink-0 transition-transform duration-200 hover:scale-105">
-              <img src={kpiLogoLight} alt="КПІ Логотип" className="w-full h-full object-contain dark:hidden" />
-              <img src={kpiLogoDark} alt="КПІ Логотип" className="w-full h-full object-contain hidden dark:block" />
+              <img src={`${import.meta.env.BASE_URL}KPI-1.png`} alt="КПІ Логотип" className="w-full h-full object-contain dark:hidden" />
+              <img src={`${import.meta.env.BASE_URL}KPI-2-black-theme.png`} alt="КПІ Логотип" className="w-full h-full object-contain hidden dark:block" />
             </div>
             <div>
               <div className="font-bold text-lg text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-1.5">
