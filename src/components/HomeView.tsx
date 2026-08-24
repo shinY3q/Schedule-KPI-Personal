@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calendar,
   FileText,
@@ -37,6 +37,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onRefreshSchedule,
   isRefreshing = false,
 }) => {
+  const [spinClass, setSpinClass] = useState('');
+  useEffect(() => {
+    if (isRefreshing) {
+      setSpinClass('animate-spin text-blue-600 dark:text-blue-400');
+    }
+  }, [isRefreshing]);
+
   const firstName = inp.studentName
     ? inp.studentName.split(' ')[1] || inp.studentName.split(' ')[0]
     : 'Студенте';
@@ -273,7 +280,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
             title="Оновити зараз"
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-all duration-200 active:scale-90 cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`} />
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${spinClass}`}
+              onAnimationIteration={() => {
+                if (!isRefreshing) {
+                  setSpinClass('text-slate-600 dark:text-slate-400 transition-colors');
+                  setTimeout(() => setSpinClass(''), 50);
+                }
+              }}
+            />
           </button>
         </div>
       </div>
