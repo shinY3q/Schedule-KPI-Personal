@@ -15,20 +15,50 @@ interface SettingsViewProps {
   inp: INPData;
   onUpdateInp: (newInp: INPData) => void;
   onResetFirstVisit: () => void;
+  autoUpdate?: boolean;
+  onAutoUpdateChange?: (enabled: boolean) => void;
+  updateInterval?: string;
+  onUpdateIntervalChange?: (interval: string) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   inp,
   onUpdateInp,
   onResetFirstVisit,
+  autoUpdate: propAutoUpdate,
+  onAutoUpdateChange,
+  updateInterval: propUpdateInterval,
+  onUpdateIntervalChange,
 }) => {
-  const [autoUpdate, setAutoUpdate] = useState(true);
-  const [updateInterval, setUpdateInterval] = useState('30m');
+  const [autoUpdate, setAutoUpdate] = useState<boolean>(() => {
+    if (propAutoUpdate !== undefined) return propAutoUpdate;
+    const saved = localStorage.getItem('kpi_auto_update');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [updateInterval, setUpdateInterval] = useState<string>(() => {
+    if (propUpdateInterval !== undefined) return propUpdateInterval;
+    return localStorage.getItem('kpi_update_interval') || '30m';
+  });
+
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
   const { theme, setTheme } = useTheme();
+
+  const handleToggleAutoUpdate = () => {
+    const next = !autoUpdate;
+    setAutoUpdate(next);
+    localStorage.setItem('kpi_auto_update', String(next));
+    onAutoUpdateChange?.(next);
+  };
+
+  const handleIntervalChange = (val: string) => {
+    setUpdateInterval(val);
+    localStorage.setItem('kpi_update_interval', val);
+    onUpdateIntervalChange?.(val);
+  };
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
@@ -152,7 +182,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 type="button"
                 role="switch"
                 aria-checked={autoUpdate}
-                onClick={() => setAutoUpdate(!autoUpdate)}
+                onClick={handleToggleAutoUpdate}
                 className={`switch-btn ${autoUpdate ? 'switch-on' : ''}`}
               />
             </div>
@@ -164,7 +194,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </label>
                 <select
                   value={updateInterval}
-                  onChange={(e) => setUpdateInterval(e.target.value)}
+                  onChange={(e) => handleIntervalChange(e.target.value)}
                   className="w-full py-2.5 px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors duration-200 cursor-pointer"
                 >
                   <option value="15m">Кожні 15 хвилин</option>

@@ -67,6 +67,15 @@ export function AppContent() {
   const [selectedSubject, setSelectedSubject] = useState<INPSubject | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
+  const [autoUpdate, setAutoUpdate] = useState<boolean>(() => {
+    const saved = localStorage.getItem('kpi_auto_update');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [updateInterval, setUpdateInterval] = useState<string>(() => {
+    return localStorage.getItem('kpi_update_interval') || '30m';
+  });
+
   // Sync tab changes to sessionStorage
   useEffect(() => {
     sessionStorage.setItem('kpi_current_tab', currentTab);
@@ -103,6 +112,23 @@ export function AppContent() {
       loadScheduleForGroup(inpData.group);
     }
   }, [inpData.group, isLoggedIn]);
+
+  // Background auto-update interval timer
+  useEffect(() => {
+    if (!autoUpdate || !inpData?.group || !isLoggedIn) return;
+
+    let intervalMs = 30 * 60 * 1000;
+    if (updateInterval === '15m') intervalMs = 15 * 60 * 1000;
+    else if (updateInterval === '30m') intervalMs = 30 * 60 * 1000;
+    else if (updateInterval === '1h') intervalMs = 60 * 60 * 1000;
+    else if (updateInterval === '24h') intervalMs = 24 * 60 * 60 * 1000;
+
+    const timer = setInterval(() => {
+      loadScheduleForGroup(inpData.group);
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [autoUpdate, updateInterval, inpData.group, isLoggedIn]);
 
   const handleUpdateInp = (newInp: INPData) => {
     setInpData(newInp);
@@ -206,6 +232,16 @@ export function AppContent() {
               inp={inpData}
               onUpdateInp={handleUpdateInp}
               onResetFirstVisit={handleResetFirstVisit}
+              autoUpdate={autoUpdate}
+              onAutoUpdateChange={(enabled) => {
+                setAutoUpdate(enabled);
+                localStorage.setItem('kpi_auto_update', String(enabled));
+              }}
+              updateInterval={updateInterval}
+              onUpdateIntervalChange={(interval) => {
+                setUpdateInterval(interval);
+                localStorage.setItem('kpi_update_interval', interval);
+              }}
             />
           )}
         </main>
