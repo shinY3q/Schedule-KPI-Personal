@@ -10,12 +10,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
       (function() {
-        const theme = localStorage.getItem('kpi_theme') || 'light';
-        if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
+        try {
+          let theme = 'light';
+          try {
+            theme = localStorage.getItem('kpi_theme');
+          } catch(e) {}
+          if (!theme && typeof document !== 'undefined') {
+            const match = document.cookie.match(/(^| )kpi_theme=([^;]+)/);
+            if (match) theme = decodeURIComponent(match[2]);
+          }
+          if (!theme) theme = 'light';
+          if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
       })();
     </script>
   </head>

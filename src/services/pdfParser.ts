@@ -1,10 +1,9 @@
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import type { INPData, INPSubject } from '../types/inp';
 
-try {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-} catch (e) {
-  console.warn('PDF Worker init warning:', e);
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 }
 
 export async function parsePdfINP(file: File): Promise<INPData> {

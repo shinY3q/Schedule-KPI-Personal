@@ -10,6 +10,7 @@ import {
 import type { INPData } from '../types/inp';
 import { parsePdfINP } from '../services/pdfParser';
 import { useTheme } from '../context/ThemeContext';
+import { safeStorage } from '../services/storage';
 
 interface SettingsViewProps {
   inp: INPData;
@@ -32,13 +33,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const [autoUpdate, setAutoUpdate] = useState<boolean>(() => {
     if (propAutoUpdate !== undefined) return propAutoUpdate;
-    const saved = localStorage.getItem('kpi_auto_update');
+    const saved = safeStorage.getItem('kpi_auto_update');
     return saved !== null ? saved === 'true' : true;
   });
 
   const [updateInterval, setUpdateInterval] = useState<string>(() => {
     if (propUpdateInterval !== undefined) return propUpdateInterval;
-    return localStorage.getItem('kpi_update_interval') || '30m';
+    return safeStorage.getItem('kpi_update_interval') || '30m';
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -50,13 +51,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const handleToggleAutoUpdate = () => {
     const next = !autoUpdate;
     setAutoUpdate(next);
-    localStorage.setItem('kpi_auto_update', String(next));
+    safeStorage.setItem('kpi_auto_update', String(next));
     onAutoUpdateChange?.(next);
   };
 
   const handleIntervalChange = (val: string) => {
     setUpdateInterval(val);
-    localStorage.setItem('kpi_update_interval', val);
+    safeStorage.setItem('kpi_update_interval', val);
     onUpdateIntervalChange?.(val);
   };
 

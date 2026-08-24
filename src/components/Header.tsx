@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, User, Check, RefreshCw, Sun, Moon, Laptop, CheckCheck } from 'lucide-react';
 import type { INPData } from '../types/inp';
 import { useTheme } from '../context/ThemeContext';
+import { safeStorage } from '../services/storage';
 
 interface HeaderProps {
   inp: INPData;
@@ -16,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [hasUnreadNotification, setHasUnreadNotification] = useState<boolean>(() => {
-    return localStorage.getItem('kpi_notification_read') !== 'true';
+    return safeStorage.getItem('kpi_notification_read') !== 'true';
   });
   const { theme, setTheme } = useTheme();
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -46,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const markAsRead = () => {
     setHasUnreadNotification(false);
-    localStorage.setItem('kpi_notification_read', 'true');
+    safeStorage.setItem('kpi_notification_read', 'true');
   };
 
   const handleToggleNotifications = () => {

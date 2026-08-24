@@ -1,36 +1,28 @@
 import { useState, useEffect } from 'react';
+import type { INPData, INPSubject } from './types/inp';
+import type { GroupScheduleRaw } from './types/schedule';
 import { Sidebar } from './components/Sidebar';
 import type { NavTab } from './components/Sidebar';
 import { Header } from './components/Header';
-import { LoginView } from './components/LoginView';
 import { HomeView } from './components/HomeView';
 import { ScheduleView } from './components/ScheduleView';
 import { SubjectsView } from './components/SubjectsView';
 import { SettingsView } from './components/SettingsView';
 import { SubjectModal } from './components/SubjectModal';
-import type { INPData, INPSubject } from './types/inp';
-import type { GroupScheduleRaw } from './types/schedule';
-
+import { LoginView } from './components/LoginView';
 import { filterAndProcessSchedule } from './services/matcher';
 import { findGroupByName, fetchGroupSchedule, fetchCurrentWeekInfo } from './services/kpiApi';
 import { ThemeProvider } from './context/ThemeContext';
+import { safeStorage } from './services/storage';
 
 export function AppContent() {
   // If user previously uploaded INP and didn't log out or clear storage, stay logged in
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem('kpi_has_uploaded_inp') === 'true';
+    return safeStorage.getItem('kpi_has_uploaded_inp') === 'true';
   });
 
   const [inpData, setInpData] = useState<INPData>(() => {
-    const saved = localStorage.getItem('kpi_inp_data');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse saved INP data:', e);
-      }
-    }
-    return {
+    return safeStorage.getJSON<INPData>('kpi_inp_data', {
       studentName: '',
       group: '',
       academicYear: '',
@@ -45,40 +37,40 @@ export function AppContent() {
       subjects: [],
       fileName: '',
       uploadDate: '',
-    };
+    });
   });
 
   const [rawSchedule, setRawSchedule] = useState<GroupScheduleRaw>(() => {
-    const saved = sessionStorage.getItem('kpi_raw_schedule');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return { groupCode: '', scheduleFirstWeek: [], scheduleSecondWeek: [] };
+    return safeStorage.getJSON<GroupScheduleRaw>('kpi_raw_schedule', {
+      groupCode: '',
+      scheduleFirstWeek: [],
+      scheduleSecondWeek: [],
+    });
   });
 
   const [currentTab, setCurrentTab] = useState<NavTab>(() => {
-    return (sessionStorage.getItem('kpi_current_tab') as NavTab) || 'home';
+    return (safeStorage.getItem('kpi_current_tab') as NavTab) || 'home';
   });
 
   const [currentWeekNum, setCurrentWeekNum] = useState<1 | 2>(() => {
-    return (Number(sessionStorage.getItem('kpi_current_week')) as 1 | 2) || 1;
+    return (Number(safeStorage.getItem('kpi_current_week')) as 1 | 2) || 1;
   });
 
   const [selectedSubject, setSelectedSubject] = useState<INPSubject | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const [autoUpdate, setAutoUpdate] = useState<boolean>(() => {
-    const saved = localStorage.getItem('kpi_auto_update');
+    const saved = safeStorage.getItem('kpi_auto_update');
     return saved !== null ? saved === 'true' : true;
   });
 
   const [updateInterval, setUpdateInterval] = useState<string>(() => {
-    return localStorage.getItem('kpi_update_interval') || '30m';
+    return safeStorage.getItem('kpi_update_interval') || '30m';
   });
 
-  // Sync tab changes to sessionStorage
+  // Sync tab changes to safeStorage
   useEffect(() => {
-    sessionStorage.setItem('kpi_current_tab', currentTab);
+    safeStorage.setItem('kpi_current_tab', currentTab);
   }, [currentTab]);
 
   const loadScheduleForGroup = async (groupName: string) => {
@@ -88,15 +80,14 @@ export function AppContent() {
       if (groupObj) {
         const schedule = await fetchGroupSchedule(groupObj.id);
         setRawSchedule(schedule);
-        sessionStorage.setItem('kpi_raw_schedule', JSON.stringify(schedule));
+        safeStorage.setJSON('kpi_raw_schedule', schedule);
       } else {
         const empty: GroupScheduleRaw = { groupCode: '', scheduleFirstWeek: [], scheduleSecondWeek: [] };
         setRawSchedule(empty);
-        sessionStorage.setItem('kpi_raw_schedule', JSON.stringify(empty));
+        safeStorage.setJSON('kpi_raw_schedule', empty);
       }
     } catch (err) {
-      console.warn('Could not fetch schedule from API, using empty fallback:', err);
-      // We don't overwrite with RAW_SCHEDULE_IK31 here either
+      console.warn('Could not fetch schedule from API, using cached/empty fallback:', err);
     } finally {
       setIsRefreshing(false);
     }
@@ -105,7 +96,7 @@ export function AppContent() {
   useEffect(() => {
     fetchCurrentWeekInfo().then(info => {
       setCurrentWeekNum(info.currentWeek);
-      sessionStorage.setItem('kpi_current_week', String(info.currentWeek));
+      safeStorage.setItem('kpi_current_week', String(info.currentWeek));
     });
 
     if (inpData?.group && isLoggedIn) {
@@ -132,9 +123,9 @@ export function AppContent() {
 
   const handleUpdateInp = (newInp: INPData) => {
     setInpData(newInp);
-    localStorage.setItem('kpi_inp_data', JSON.stringify(newInp));
-    localStorage.setItem('kpi_has_uploaded_inp', 'true');
-    localStorage.removeItem('kpi_notification_read');
+    safeStorage.setJSON('kpi_inp_data', newInp);
+    safeStorage.setItem('kpi_has_uploaded_inp', 'true');
+    safeStorage.removeItem('kpi_notification_read');
     loadScheduleForGroup(newInp.group);
   };
 
@@ -145,15 +136,16 @@ export function AppContent() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('kpi_has_uploaded_inp');
-    localStorage.removeItem('kpi_notification_read');
+    safeStorage.removeItem('kpi_has_uploaded_inp');
+    safeStorage.removeItem('kpi_notification_read');
     setIsLoggedIn(false);
   };
 
   const handleResetFirstVisit = () => {
-    localStorage.removeItem('kpi_has_uploaded_inp');
-    localStorage.removeItem('kpi_inp_data');
-    localStorage.removeItem('kpi_notification_read');
+    safeStorage.removeItem('kpi_has_uploaded_inp');
+    safeStorage.removeItem('kpi_inp_data');
+    safeStorage.removeItem('kpi_notification_read');
+    safeStorage.removeItem('kpi_raw_schedule');
     setInpData({
       studentName: '',
       group: '',
@@ -235,12 +227,12 @@ export function AppContent() {
               autoUpdate={autoUpdate}
               onAutoUpdateChange={(enabled) => {
                 setAutoUpdate(enabled);
-                localStorage.setItem('kpi_auto_update', String(enabled));
+                safeStorage.setItem('kpi_auto_update', String(enabled));
               }}
               updateInterval={updateInterval}
               onUpdateIntervalChange={(interval) => {
                 setUpdateInterval(interval);
-                localStorage.setItem('kpi_update_interval', interval);
+                safeStorage.setItem('kpi_update_interval', interval);
               }}
             />
           )}
