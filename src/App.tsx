@@ -14,6 +14,7 @@ import { filterAndProcessSchedule } from './services/matcher';
 import { findGroupByName, fetchGroupSchedule, fetchCurrentWeekInfo } from './services/kpiApi';
 import { ThemeProvider } from './context/ThemeContext';
 import { safeStorage } from './services/storage';
+import { normalizeINPData } from './services/inpNormalization';
 
 export function AppContent() {
   // If user previously uploaded INP and didn't log out or clear storage, stay logged in
@@ -22,7 +23,7 @@ export function AppContent() {
   });
 
   const [inpData, setInpData] = useState<INPData>(() => {
-    return safeStorage.getJSON<INPData>('kpi_inp_data', {
+    const storedData = safeStorage.getJSON<INPData>('kpi_inp_data', {
       studentName: '',
       group: '',
       academicYear: '',
@@ -38,6 +39,13 @@ export function AppContent() {
       fileName: '',
       uploadDate: '',
     });
+    const normalizedData = normalizeINPData(storedData);
+
+    if (normalizedData !== storedData) {
+      safeStorage.setJSON('kpi_inp_data', normalizedData);
+    }
+
+    return normalizedData;
   });
 
   const [rawSchedule, setRawSchedule] = useState<GroupScheduleRaw>(() => {
@@ -122,11 +130,12 @@ export function AppContent() {
   }, [autoUpdate, updateInterval, inpData.group, isLoggedIn]);
 
   const handleUpdateInp = (newInp: INPData) => {
-    setInpData(newInp);
-    safeStorage.setJSON('kpi_inp_data', newInp);
+    const normalizedInp = normalizeINPData(newInp);
+    setInpData(normalizedInp);
+    safeStorage.setJSON('kpi_inp_data', normalizedInp);
     safeStorage.setItem('kpi_has_uploaded_inp', 'true');
     safeStorage.removeItem('kpi_notification_read');
-    loadScheduleForGroup(newInp.group);
+    loadScheduleForGroup(normalizedInp.group);
   };
 
   const handleLoginSuccess = (data: INPData) => {
