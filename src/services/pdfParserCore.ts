@@ -295,9 +295,15 @@ export function extractSubjectsFromPages(pages: ExtractedPDFPage[]): INPSubject[
 
 function extractSubjectsFromLinearText(text: string): INPSubject[] {
   const subjects: INPSubject[] = [];
-  const normalized = normalizeWhitespace(text);
-  const selectiveIndex = normalized.search(/\b(?:Обрані|Вибіркові)\b/iu);
-  const recordRegex = /(?:^|\s)(\d{1,3})\s+(.+?)\s+([А-ЯІЇЄҐA-Z][А-ЯІЇЄҐA-Z0-9.-]{0,15})\s+(\d{1,2})\s+(\d+(?:[.,]\d+)?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.+?)\s+(\d+|-)\s+([А-ЯІЇЄҐA-Z0-9.-]+|-)(?=\s+(?:\d{1,3}\s+|Обрані\b|Вибіркові\b|Всього:|$))/giu;
+  const normalizedDocument = normalizeWhitespace(text);
+  const tableHeading = normalizedDocument.match(
+    /(?:^|\s)(?:Нормативні|Обрані|Вибіркові)(?=\s)/iu,
+  );
+  const normalized = tableHeading?.index !== undefined
+    ? normalizedDocument.slice(tableHeading.index).trim()
+    : normalizedDocument;
+  const selectiveIndex = normalized.search(/(?:^|\s)(?:Обрані|Вибіркові)(?=\s)/iu);
+  const recordRegex = /(?:^|\s)(\d{1,3})\s+(.+?)\s+([А-ЯІЇЄҐA-Z][А-ЯІЇЄҐA-Z0-9.-]{0,15})\s+(\d{1,2})\s+(\d+(?:[.,]\d+)?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.+?)\s+(\d+|-)\s+([А-ЯІЇЄҐA-Z0-9.-]+|-)(?=\s+(?:\d{1,3}\s+|(?:Обрані|Вибіркові)(?=\s)|Всього:|$))/giu;
 
   for (const match of normalized.matchAll(recordRegex)) {
     const number = Number.parseInt(match[1], 10);
