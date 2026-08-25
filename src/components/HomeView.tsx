@@ -43,6 +43,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   const semester7Subjects = inp.subjects.filter(s => s.semester === 7);
   const totalSubjectsCount = semester7Subjects.length > 0 ? semester7Subjects.length : inp.subjects.length;
+  const selectedSubjectsCount = inp.subjects.filter(subject => subject.category === 'selective').length;
 
   const todayPairs: ProcessedLesson[] = [];
   weekSchedule.days.forEach(day => {
@@ -94,9 +95,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Навчальна група
               </span>
-              <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 text-xs font-bold border border-blue-100 dark:border-blue-900/60">
-                {inp.faculty || 'КПІ'}
-              </span>
             </div>
             
             <div className="flex items-baseline gap-2 mb-4">
@@ -113,6 +111,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500">Навчальний рік:</span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{inp.academicYear || 'Не вказано'}</span>
+              </div>
+              <div className="flex justify-between gap-3 py-1 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 dark:text-slate-500 flex-shrink-0">Факультет:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-right max-w-[160px]" title={inp.faculty}>
+                  {inp.faculty || 'Не вказано'}
+                </span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-400 dark:text-slate-500">Спеціальність:</span>
@@ -267,9 +271,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0" />
             <span className="text-slate-500 dark:text-slate-400">Вибіркових:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200">
-              {inp.subjects.filter(s => s.category === 'selective').length}
-            </span>
+            <span className="font-bold text-slate-800 dark:text-slate-200">{selectedSubjectsCount}</span>
           </div>
         </div>
 
