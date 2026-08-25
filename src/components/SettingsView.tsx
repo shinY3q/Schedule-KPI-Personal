@@ -8,7 +8,6 @@ import {
   Laptop
 } from 'lucide-react';
 import type { INPData } from '../types/inp';
-import { parsePdfINP } from '../services/pdfParser';
 import { useTheme } from '../context/ThemeContext';
 import { safeStorage } from '../services/storage';
 
@@ -65,6 +64,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (!file) return;
     setIsUploading(true);
     try {
+      const { parsePdfINP } = await import('../services/pdfParser');
       const parsed = await parsePdfINP(file);
       onUpdateInp(parsed);
       setSuccessMsg('ІНП успішно оновлено!');
@@ -90,7 +90,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {successMsg && (
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-slide-up">
+        <div role="status" aria-live="polite" className="p-3.5 sm:p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-slide-up">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
           <span>{successMsg}</span>
         </div>
@@ -123,12 +123,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-              <label className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-650 active:scale-95 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0 shadow-2xs">
+              <label aria-disabled={isUploading} className={`w-full sm:w-auto min-h-10 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-650 active:scale-95 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0 shadow-2xs has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 has-[:focus-visible]:ring-offset-2 ${isUploading ? 'pointer-events-none opacity-70' : ''}`}>
                 <span>{isUploading ? 'Обробка...' : 'Змінити файл'}</span>
                 <input
                   type="file"
                   accept=".pdf"
-                  className="hidden"
+                  disabled={isUploading}
+                  className="sr-only"
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       handleFileUpload(e.target.files[0]);
@@ -183,6 +184,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 type="button"
                 role="switch"
                 aria-checked={autoUpdate}
+                aria-label="Автоматичне оновлення розкладу"
                 onClick={handleToggleAutoUpdate}
                 className={`switch-btn ${autoUpdate ? 'switch-on' : ''}`}
               />
@@ -190,10 +192,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             {autoUpdate && (
               <div className="pt-2 animate-slide-up">
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                <label htmlFor="update-interval" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
                   Час оновлення
                 </label>
                 <select
+                  id="update-interval"
                   value={updateInterval}
                   onChange={(e) => handleIntervalChange(e.target.value)}
                   className="w-full py-2.5 px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors duration-200 cursor-pointer"
@@ -219,6 +222,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setTheme('light')}
+                  aria-pressed={theme === 'light'}
                   className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                     theme === 'light'
                       ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs scale-[1.02]'
@@ -231,6 +235,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setTheme('dark')}
+                  aria-pressed={theme === 'dark'}
                   className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                     theme === 'dark'
                       ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs scale-[1.02]'
@@ -243,6 +248,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setTheme('system')}
+                  aria-pressed={theme === 'system'}
                   className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                     theme === 'system'
                       ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs scale-[1.02]'

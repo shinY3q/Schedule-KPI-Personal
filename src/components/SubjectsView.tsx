@@ -34,7 +34,9 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
         {/* Semester Tabs */}
         <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl grid grid-cols-2 sm:flex sm:items-center gap-1 w-full sm:w-auto border border-slate-200/60 dark:border-slate-700 transition-colors duration-200">
           <button
+            type="button"
             onClick={() => setSelectedSemester(7)}
+            aria-pressed={selectedSemester === 7}
             className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-bold text-center transition-all duration-200 cursor-pointer active:scale-95 ${
               selectedSemester === 7
                 ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm scale-[1.02]'
@@ -44,7 +46,9 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
             7 семестр (Осінь)
           </button>
           <button
+            type="button"
             onClick={() => setSelectedSemester(8)}
+            aria-pressed={selectedSemester === 8}
             className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-bold text-center transition-all duration-200 cursor-pointer active:scale-95 ${
               selectedSemester === 8
                 ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm scale-[1.02]'
@@ -59,7 +63,7 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
       {/* Subjects Cards List */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4 transition-all duration-200 hover:shadow-sm">
         
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
@@ -76,10 +80,12 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
             const isNormative = subject.category === 'normative';
 
             return (
-              <div
+              <button
+                type="button"
                 key={subject.id}
                 onClick={() => onSelectSubject(subject)}
-                className="p-4 sm:p-5 rounded-2xl bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-750 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 flex items-center justify-between gap-3 sm:gap-4 cursor-pointer group"
+                aria-label={`Відкрити дисципліну: ${subject.name}`}
+                className="w-full text-left p-4 sm:p-5 rounded-2xl bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-750 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 flex items-center justify-between gap-3 sm:gap-4 cursor-pointer group"
               >
                 <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   <div
@@ -135,13 +141,13 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
                     <span className="theme-arrow text-slate-400 dark:text-slate-500 group-hover:text-white transition-all duration-200" />
                   </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
 
         {/* Footer Summary */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs text-slate-500 dark:text-slate-400">
           <span>Всього предметів у семестрі: <strong className="text-slate-800 dark:text-slate-200">{filteredSubjects.length}</strong></span>
           <span>
             Сума кредитів:{' '}

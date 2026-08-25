@@ -43,6 +43,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         {/* Week navigation widget */}
         <div className="flex items-center justify-between sm:justify-center gap-2 sm:gap-3 bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 w-full sm:w-auto transition-colors duration-200">
           <button
+            type="button"
             onClick={() => onSwitchWeek(currentWeekNum === 1 ? 2 : 1)}
             title="Попередній тиждень"
             className="p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 active:scale-95 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all duration-200 shadow-2xs cursor-pointer flex items-center justify-center"
@@ -60,6 +61,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           </div>
 
           <button
+            type="button"
             onClick={() => onSwitchWeek(currentWeekNum === 1 ? 2 : 1)}
             title="Наступний тиждень"
             className="p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 active:scale-95 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all duration-200 shadow-2xs cursor-pointer flex items-center justify-center"
@@ -77,8 +79,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             const hasPairs = day.lessons.length > 0;
             return (
               <button
+                type="button"
                 key={day.dayCode}
                 onClick={() => setSelectedDayIndex(idx)}
+                aria-pressed={isActive}
+                aria-label={`${day.dayFull}, ${day.dateStr}: ${day.lessons.length} занять`}
                 className={`py-2 sm:py-3 px-1.5 sm:px-2 rounded-xl text-center transition-all duration-200 flex flex-col items-center gap-0.5 sm:gap-1 cursor-pointer active:scale-95 ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30 scale-[1.02]'
@@ -140,14 +145,16 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/60';
 
               return (
-                <div
+                <button
+                  type="button"
                   key={lesson.id}
                   onClick={() => {
                     if (lesson.matchedSubject) {
                       onSelectSubject(lesson.matchedSubject);
                     }
                   }}
-                  className="p-4 sm:p-5 rounded-2xl bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-750 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 cursor-pointer group"
+                  aria-label={`Відкрити ${lesson.subjectName}, ${lesson.timeStart}–${lesson.timeEnd}`}
+                  className="w-full text-left p-4 sm:p-5 rounded-2xl bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-750 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 cursor-pointer group"
                 >
                   <div className="sm:w-36 flex-shrink-0">
                     <div className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-100">
@@ -192,7 +199,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       <span className="theme-arrow text-slate-400 dark:text-slate-500 group-hover:text-white transition-all duration-200" />
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

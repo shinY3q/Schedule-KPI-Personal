@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, FileText, Sparkles, ShieldCheck } from 'lucide-react';
 import type { INPData } from '../types/inp';
-import { parsePdfINP } from '../services/pdfParser';
 
 interface LoginViewProps {
   onLoginSuccess: (inp: INPData) => void;
@@ -17,6 +16,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setIsUploading(true);
     setErrorMsg('');
     try {
+      const { parsePdfINP } = await import('../services/pdfParser');
       const parsed = await parsePdfINP(file);
       if (parsed.subjects.length === 0) {
         setErrorMsg('Не вдалося розпізнати предмети у PDF. Переконайтеся, що файл містить актуальний ІНП.');
@@ -45,8 +45,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex items-center justify-center p-3 sm:p-6 lg:p-8 transition-colors duration-250">
-      <div className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden flex flex-col animate-page-enter">
+    <main className="min-h-screen min-h-[100dvh] bg-slate-100 dark:bg-slate-950 flex items-center justify-center px-3 py-6 sm:p-6 lg:p-8 transition-colors duration-200 overflow-hidden relative">
+      <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.09),transparent_42%)] dark:bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.12),transparent_44%)] pointer-events-none" />
+      <div className="relative max-w-2xl w-full bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden flex flex-col animate-page-enter">
         
         {/* Top Header Banner */}
         <div className="bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-950 p-6 sm:p-10 text-white relative overflow-hidden text-center flex flex-col items-center">
@@ -77,7 +78,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         <div className="p-5 sm:p-10 space-y-4 sm:space-y-6">
           
           {errorMsg && (
-            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold text-center animate-slide-up">
+            <div role="alert" className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold text-center animate-slide-up">
               {errorMsg}
             </div>
           )}
@@ -90,10 +91,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center transition-all duration-200 flex flex-col items-center justify-center gap-3 sm:gap-4 cursor-pointer ${
+            aria-busy={isUploading}
+            className={`group border-2 border-dashed rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center transition-[border-color,background-color,transform,box-shadow] duration-200 flex flex-col items-center justify-center gap-3 sm:gap-4 ${
               dragOver
-                ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/50 scale-[1.01]'
-                : 'border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 bg-slate-50/60 dark:bg-slate-800/40 hover:scale-[1.005]'
+                ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/50 scale-[1.01] shadow-lg shadow-blue-500/10'
+                : 'border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 bg-slate-50/60 dark:bg-slate-800/40'
             }`}
           >
             <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs transition-transform duration-200 group-hover:scale-110">
@@ -109,13 +111,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               </p>
             </div>
 
-            <label className="mt-1 sm:mt-2 w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/20 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer">
+            <label aria-disabled={isUploading} className={`mt-1 sm:mt-2 w-full sm:w-auto min-h-11 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/20 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-300 has-[:focus-visible]:ring-offset-2 ${isUploading ? 'pointer-events-none opacity-70' : ''}`}>
               <FileText className="w-4 h-4" />
               <span>Обрати файл ІНП (.pdf)</span>
               <input
                 type="file"
                 accept=".pdf"
-                className="hidden"
+                disabled={isUploading}
+                className="sr-only"
                 onChange={(e) => {
                   if (e.target.files && e.target.files.length > 0) {
                     handleFileUpload(e.target.files[0]);
@@ -140,6 +143,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         </div>
 
       </div>
-    </div>
+    </main>
   );
 };

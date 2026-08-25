@@ -173,7 +173,14 @@ export function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row text-slate-800 dark:text-slate-100 transition-colors duration-200">
+    <div className="min-h-screen min-h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row text-slate-800 dark:text-slate-100 transition-colors duration-200 selection:bg-blue-200 dark:selection:bg-blue-700">
+      <a
+        href="#main-content"
+        className="fixed left-3 top-3 z-[100] -translate-y-20 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-transform focus:translate-y-0"
+      >
+        Перейти до вмісту
+      </a>
+
       <Sidebar
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
@@ -181,14 +188,14 @@ export function AppContent() {
         groupName={inpData.group}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen min-h-[100dvh] overflow-x-hidden">
         <Header
           inp={inpData}
           onRefresh={() => loadScheduleForGroup(inpData.group)}
           isRefreshing={isRefreshing}
         />
 
-        <main className="flex-1 pb-24 md:pb-16">
+        <main id="main-content" tabIndex={-1} className="app-main flex-1 w-full">
           {currentTab === 'home' && (
             <HomeView
               inp={inpData}

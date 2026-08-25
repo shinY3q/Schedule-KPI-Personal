@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Clock,
   MapPin,
   User,
   ExternalLink,
-  GraduationCap
+  GraduationCap,
+  X
 } from 'lucide-react';
 import type { INPSubject } from '../types/inp';
 import type { WeekSchedule } from '../types/schedule';
@@ -21,6 +22,27 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
   weekSchedule,
 }) => {
   const [activeTab, setActiveTab] = useState<'schedule' | 'info' | 'materials'>('schedule');
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus({ preventScroll: true });
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus({ preventScroll: true });
+    };
+  }, [onClose]);
 
   if (!subject) return null;
 
@@ -44,16 +66,30 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 z-50 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200 p-5 sm:p-8 space-y-4 sm:space-y-6">
+    <div
+      className="fixed inset-0 bg-slate-950/65 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 z-50 animate-backdrop-enter"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="subject-modal-title"
+        className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-3xl w-full max-h-[calc(100dvh-0.75rem)] sm:max-h-[calc(100dvh-3rem)] overflow-y-auto overscroll-contain shadow-2xl border border-slate-200 dark:border-slate-800 animate-modal-enter p-5 sm:p-8 space-y-4 sm:space-y-6"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         
         {/* Back Button */}
         <button
+          ref={closeButtonRef}
+          type="button"
           onClick={onClose}
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 active:scale-95 transition-all duration-200 cursor-pointer group"
+          aria-label="Закрити вікно дисципліни"
+          className="inline-flex min-h-9 items-center gap-2 rounded-xl px-2 -ml-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all duration-200 cursor-pointer group"
         >
-          <span className="theme-arrow rotate-180 text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200" />
-          <span>Назад</span>
+          <X aria-hidden="true" className="w-4 h-4 transition-transform duration-200 group-hover:rotate-90" />
+          <span>Закрити</span>
         </button>
 
         {/* Header Subject Info */}
@@ -76,7 +112,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
             </span>
           </div>
 
-          <h2 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 leading-snug">
+          <h2 id="subject-modal-title" className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 leading-snug">
             {subject.name}
           </h2>
 
@@ -93,8 +129,13 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
         </div>
 
         {/* Sub-tabs Navigation */}
-        <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-800">
+        <div role="tablist" aria-label="Розділи дисципліни" className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-800">
           <button
+            type="button"
+            role="tab"
+            id="subject-tab-schedule"
+            aria-selected={activeTab === 'schedule'}
+            aria-controls="subject-panel-schedule"
             onClick={() => setActiveTab('schedule')}
             className={`pb-3 px-3 sm:px-4 text-xs font-bold transition-all duration-200 relative cursor-pointer flex-shrink-0 ${
               activeTab === 'schedule'
@@ -109,6 +150,11 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
           </button>
 
           <button
+            type="button"
+            role="tab"
+            id="subject-tab-info"
+            aria-selected={activeTab === 'info'}
+            aria-controls="subject-panel-info"
             onClick={() => setActiveTab('info')}
             className={`pb-3 px-3 sm:px-4 text-xs font-bold transition-all duration-200 relative cursor-pointer flex-shrink-0 ${
               activeTab === 'info'
@@ -123,6 +169,11 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
           </button>
 
           <button
+            type="button"
+            role="tab"
+            id="subject-tab-materials"
+            aria-selected={activeTab === 'materials'}
+            aria-controls="subject-panel-materials"
             onClick={() => setActiveTab('materials')}
             className={`pb-3 px-3 sm:px-4 text-xs font-bold transition-all duration-200 relative cursor-pointer flex-shrink-0 ${
               activeTab === 'materials'
@@ -139,7 +190,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
 
         {/* Sub-tab Content: Розклад */}
         {activeTab === 'schedule' && (
-          <div className="space-y-4 animate-slide-up">
+          <div id="subject-panel-schedule" role="tabpanel" aria-labelledby="subject-tab-schedule" className="space-y-4 animate-slide-up">
             <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
               <span className="font-semibold">{weekSchedule.weekLabel}</span>
               <span className="text-slate-400 dark:text-slate-500">{weekSchedule.dateRange}</span>
@@ -192,7 +243,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
 
         {/* Sub-tab Content: Інформація */}
         {activeTab === 'info' && (
-          <div className="space-y-4 text-xs animate-slide-up">
+          <div id="subject-panel-info" role="tabpanel" aria-labelledby="subject-tab-info" className="space-y-4 text-xs animate-slide-up">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                 <span className="text-slate-400 dark:text-slate-500 block text-[11px]">Лекції</span>
@@ -231,7 +282,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
 
         {/* Sub-tab Content: Матеріали */}
         {activeTab === 'materials' && (
-          <div className="space-y-3 text-xs animate-slide-up">
+          <div id="subject-panel-materials" role="tabpanel" aria-labelledby="subject-tab-materials" className="space-y-3 text-xs animate-slide-up">
             <a
               href="https://ecampus.kpi.ua"
               target="_blank"

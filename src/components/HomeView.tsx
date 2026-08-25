@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Calendar,
   FileText,
@@ -37,13 +37,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onRefreshSchedule,
   isRefreshing = false,
 }) => {
-  const [spinClass, setSpinClass] = useState('');
-  useEffect(() => {
-    if (isRefreshing) {
-      setSpinClass('animate-spin text-blue-600 dark:text-blue-400');
-    }
-  }, [isRefreshing]);
-
   const firstName = inp.studentName
     ? inp.studentName.split(' ')[1] || inp.studentName.split(' ')[0]
     : 'Студенте';
@@ -81,6 +74,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
 
         <button
+          type="button"
           onClick={onNavigateToSchedule}
           className="w-full sm:w-auto px-5 py-3 sm:py-3.5 rounded-2xl bg-white dark:bg-blue-600 hover:bg-blue-50 dark:hover:bg-blue-700 text-blue-900 dark:text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 flex-shrink-0 active:scale-95 cursor-pointer group"
         >
@@ -134,6 +128,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
           <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
+              type="button"
               onClick={onNavigateToSubjects}
               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold flex items-center gap-1.5 group cursor-pointer transition-colors duration-200"
             >
@@ -164,7 +159,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
             <div className="bg-slate-50 dark:bg-slate-800/80 p-1 rounded-2xl flex items-center gap-1 border border-slate-200/60 dark:border-slate-700/60 mb-4">
               <button
+                type="button"
                 onClick={() => onSwitchWeek(1)}
+                aria-pressed={currentWeekNum === 1}
                 className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all duration-200 cursor-pointer active:scale-95 ${
                   currentWeekNum === 1
                     ? 'bg-blue-600 text-white shadow-xs scale-[1.02]'
@@ -174,7 +171,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 1 тиждень
               </button>
               <button
+                type="button"
                 onClick={() => onSwitchWeek(2)}
+                aria-pressed={currentWeekNum === 2}
                 className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all duration-200 cursor-pointer active:scale-95 ${
                   currentWeekNum === 2
                     ? 'bg-blue-600 text-white shadow-xs scale-[1.02]'
@@ -195,6 +194,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
           <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
+              type="button"
               onClick={onNavigateToSchedule}
               className="w-full py-2 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100/80 dark:hover:bg-blue-900/50 active:scale-[0.98] text-blue-700 dark:text-blue-400 font-semibold text-xs transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
             >
@@ -245,6 +245,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
           <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
+              type="button"
               onClick={onUploadNewInp}
               className="w-full py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 active:scale-[0.98] text-slate-700 dark:text-slate-200 font-semibold text-xs transition-all duration-200 flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
             >
@@ -276,18 +277,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <div className="flex items-center gap-2 self-start sm:self-auto text-[11px] sm:text-xs text-slate-400 dark:text-slate-500 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-between sm:justify-end">
           <span>Оновлено: {new Date().toLocaleDateString('uk-UA')}</span>
           <button
+            type="button"
             onClick={onRefreshSchedule}
             title="Оновити зараз"
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-all duration-200 active:scale-90 cursor-pointer"
+            aria-label={isRefreshing ? 'Розклад оновлюється' : 'Оновити розклад зараз'}
+            aria-busy={isRefreshing}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-all duration-200 active:scale-90 cursor-pointer"
           >
             <RefreshCw
-              className={`w-3.5 h-3.5 ${spinClass}`}
-              onAnimationIteration={() => {
-                if (!isRefreshing) {
-                  setSpinClass('text-slate-600 dark:text-slate-400 transition-colors');
-                  setTimeout(() => setSpinClass(''), 50);
-                }
-              }}
+              aria-hidden="true"
+              className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`}
             />
           </button>
         </div>
@@ -295,7 +294,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       {/* Preview Section */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-5 sm:p-7 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4 transition-all duration-200 hover:shadow-sm">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
               Огляд персональних занять на {weekSchedule.weekLabel}
@@ -305,8 +304,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </p>
           </div>
           <button
+            type="button"
             onClick={onNavigateToSchedule}
-            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1.5 cursor-pointer group transition-colors duration-200 flex-shrink-0"
+            className="self-start sm:self-auto rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1.5 cursor-pointer group transition-colors duration-200 flex-shrink-0"
           >
             <span>Вся сітка</span>
             <span className="theme-arrow text-blue-600 dark:text-blue-400 transition-transform duration-200 group-hover:translate-x-1" />
@@ -315,9 +315,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pt-1">
           {todayPairs.map((pair, idx) => (
-            <div
+            <button
+              type="button"
               key={idx}
-              className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/80 hover:border-blue-300 dark:hover:border-blue-500/50 hover:bg-blue-50/40 dark:hover:bg-slate-800 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] transition-all duration-200 space-y-2.5 cursor-pointer"
+              aria-label={`Відкрити розклад: ${pair.subjectName}, ${pair.timeStart}–${pair.timeEnd}`}
+              className="w-full text-left p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/80 hover:border-blue-300 dark:hover:border-blue-500/50 hover:bg-blue-50/40 dark:hover:bg-slate-800 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] transition-all duration-200 space-y-2.5 cursor-pointer"
               onClick={onNavigateToSchedule}
             >
               <div className="flex items-center justify-between">
@@ -352,7 +354,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <span className="truncate">{pair.location}</span>
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

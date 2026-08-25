@@ -46,15 +46,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Navigation items */}
-          <nav className="p-3 sm:p-4 space-y-1.5 flex flex-col">
+          <nav aria-label="Основна навігація" className="p-3 sm:p-4 space-y-1.5 flex flex-col">
             {navItems.map(item => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
               return (
                 <button
+                  type="button"
                   key={item.id}
                   onClick={() => onSelectTab(item.id)}
-                  className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 text-left cursor-pointer active:scale-[0.98] outline-none ${
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm transition-[color,background-color,border-color,transform,box-shadow] duration-200 text-left cursor-pointer active:scale-[0.98] ${
                     isActive
                       ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 font-semibold shadow-xs border border-blue-100 dark:border-blue-900/60'
                       : 'bg-transparent border border-transparent shadow-none text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
@@ -78,6 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Logout button */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800">
           <button
+            type="button"
             onClick={onLogout}
             className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 active:scale-[0.98] cursor-pointer"
           >
@@ -88,24 +91,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </aside>
 
       {/* Mobile Bottom Navigation Bar (< md) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 flex items-center justify-around shadow-lg transition-colors duration-300">
+      <nav aria-label="Мобільна навігація" className="app-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 supports-[backdrop-filter]:bg-white/85 dark:supports-[backdrop-filter]:bg-slate-900/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-2 pt-1.5 flex items-center justify-around shadow-[0_-8px_30px_rgba(15,23,42,0.08)] transition-colors duration-300">
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
           return (
             <button
+              type="button"
               key={item.id}
               onClick={() => onSelectTab(item.id)}
-              className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 cursor-pointer active:scale-95 outline-none ${
+              aria-current={isActive ? 'page' : undefined}
+              className={`relative min-h-12 flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-[color,background-color,transform] duration-200 cursor-pointer active:scale-95 ${
                 isActive
-                  ? 'text-blue-600 dark:text-blue-400 font-bold'
+                  ? 'text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/40 font-bold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium'
               }`}
             >
-              <div className="relative">
+              <div className="relative" aria-hidden="true">
                 <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
                 {isActive && (
-                  <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-blue-600 dark:bg-blue-400 rounded-full animate-ping" />
+                  <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-blue-600 dark:bg-blue-400 rounded-full shadow-[0_0_0_3px_rgba(37,99,235,0.12)]" />
                 )}
               </div>
               <span className="text-[10px] mt-1 tracking-tight leading-none">{item.label}</span>

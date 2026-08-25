@@ -21,13 +21,6 @@ export const Header: React.FC<HeaderProps> = ({
   });
   const { theme, setTheme } = useTheme();
   const notificationRef = useRef<HTMLDivElement>(null);
-  
-  const [spinClass, setSpinClass] = useState('');
-  useEffect(() => {
-    if (isRefreshing) {
-      setSpinClass('animate-spin text-blue-600 dark:text-blue-400');
-    }
-  }, [isRefreshing]);
 
   // Handle clicking outside notification popup
   useEffect(() => {
@@ -37,11 +30,17 @@ export const Header: React.FC<HeaderProps> = ({
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowNotifications(false);
+    };
+
     if (showNotifications) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showNotifications]);
 
@@ -64,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-xs transition-colors duration-200">
+    <header className="min-h-16 bg-white/95 dark:bg-slate-900/95 supports-[backdrop-filter]:bg-white/85 dark:supports-[backdrop-filter]:bg-slate-900/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 lg:px-8 py-2 flex items-center justify-between sticky top-0 z-20 shadow-xs transition-colors duration-200">
       <div className="flex items-center gap-2.5 sm:gap-3">
         {/* Mobile-only logo */}
         <div className="md:hidden w-8 h-8 rounded-lg bg-white dark:bg-slate-800 p-0.5 flex items-center justify-center shadow-xs border border-slate-200 dark:border-slate-700 flex-shrink-0">
@@ -76,20 +75,23 @@ export const Header: React.FC<HeaderProps> = ({
           <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-1.5">
             <span>КПІ</span>
             <span className="text-slate-500 dark:text-slate-400 font-normal hidden sm:inline">Мій розклад</span>
-            <span className="md:hidden text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold border border-blue-200/60 dark:border-blue-800/60 ml-0.5">
+            <span className="md:hidden max-[374px]:hidden text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold border border-blue-200/60 dark:border-blue-800/60 ml-0.5">
               {inp.group || 'ІК-31'}
             </span>
           </h1>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-1 sm:gap-3 lg:gap-4">
         {/* Quick Theme Switcher */}
-        <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 sm:p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+        <div role="group" aria-label="Тема оформлення" className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 sm:p-1 rounded-xl border border-slate-200 dark:border-slate-700">
           <button
+            type="button"
             onClick={() => setTheme('light')}
             title="Світла тема"
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            aria-label="Увімкнути світлу тему"
+            aria-pressed={theme === 'light'}
+            className={`p-1.5 sm:p-2 rounded-lg transition-[color,background-color,box-shadow,transform] duration-200 cursor-pointer active:scale-90 ${
               theme === 'light'
                 ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -98,9 +100,12 @@ export const Header: React.FC<HeaderProps> = ({
             <Sun className="w-3.5 h-3.5" />
           </button>
           <button
+            type="button"
             onClick={() => setTheme('dark')}
             title="Темна тема"
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            aria-label="Увімкнути темну тему"
+            aria-pressed={theme === 'dark'}
+            className={`p-1.5 sm:p-2 rounded-lg transition-[color,background-color,box-shadow,transform] duration-200 cursor-pointer active:scale-90 ${
               theme === 'dark'
                 ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -109,9 +114,12 @@ export const Header: React.FC<HeaderProps> = ({
             <Moon className="w-3.5 h-3.5" />
           </button>
           <button
+            type="button"
             onClick={() => setTheme('system')}
             title="Системна тема"
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            aria-label="Використовувати системну тему"
+            aria-pressed={theme === 'system'}
+            className={`p-1.5 sm:p-2 rounded-lg transition-[color,background-color,box-shadow,transform] duration-200 cursor-pointer active:scale-90 ${
               theme === 'system'
                 ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -123,27 +131,29 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Refresh button */}
         <button
+          type="button"
           onClick={onRefresh}
           title="Оновити розклад"
-          className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors relative cursor-pointer active:scale-95"
+          aria-label={isRefreshing ? 'Розклад оновлюється' : 'Оновити розклад'}
+          aria-busy={isRefreshing}
+          className="p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-[color,background-color,transform] duration-200 relative cursor-pointer active:scale-90"
         >
           <RefreshCw
-            className={`w-4 h-4 ${spinClass}`}
-            onAnimationIteration={() => {
-              if (!isRefreshing) {
-                setSpinClass('text-slate-500 dark:text-slate-400 transition-colors');
-                setTimeout(() => setSpinClass(''), 50);
-              }
-            }}
+            aria-hidden="true"
+            className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`}
           />
         </button>
 
         {/* Notifications */}
         <div className="relative" ref={notificationRef}>
           <button
+            type="button"
             onClick={handleToggleNotifications}
             title="Сповіщення"
-            className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative cursor-pointer active:scale-95"
+            aria-label={showNotifications ? 'Закрити сповіщення' : 'Відкрити сповіщення'}
+            aria-expanded={showNotifications}
+            aria-controls="notifications-panel"
+            className="p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-[color,background-color,transform] duration-200 relative cursor-pointer active:scale-90"
           >
             <Bell className="w-4 sm:w-5 h-4 sm:h-5" />
             {hasUnreadNotification && (
@@ -152,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div id="notifications-panel" role="region" aria-label="Сповіщення" className="fixed left-3 right-3 top-[4.5rem] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 z-50 animate-popover-enter">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-sm text-slate-800 dark:text-slate-100">Сповіщення</span>
@@ -161,12 +171,13 @@ export const Header: React.FC<HeaderProps> = ({
                     <span>Прочитано</span>
                   </span>
                 </div>
-                <span
+                <button
+                  type="button"
                   onClick={handleCloseNotifications}
-                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 cursor-pointer"
+                  className="rounded-md text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 cursor-pointer"
                 >
                   Закрити
-                </span>
+                </button>
               </div>
               <div className="mt-3 space-y-2.5">
                 <div className="p-3 bg-blue-50/80 dark:bg-slate-800/90 rounded-xl text-xs border border-blue-100 dark:border-slate-700 flex items-start gap-3">
@@ -186,7 +197,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* User avatar & info */}
-        <div className="flex items-center gap-2.5 sm:gap-3 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
+        <div className="hidden sm:flex items-center gap-2.5 sm:gap-3 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-semibold text-xs sm:text-sm shadow-sm flex-shrink-0">
             {inp.studentName ? inp.studentName.charAt(0) : <User className="w-4 h-4" />}
           </div>
