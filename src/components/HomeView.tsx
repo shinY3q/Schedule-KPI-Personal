@@ -3,7 +3,6 @@ import {
   Calendar,
   FileText,
   Upload,
-  RefreshCw,
   Clock,
   MapPin,
   User,
@@ -22,8 +21,6 @@ interface HomeViewProps {
   onNavigateToSchedule: () => void;
   onNavigateToSubjects: () => void;
   onUploadNewInp: () => void;
-  onRefreshSchedule: () => void;
-  isRefreshing?: boolean;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
@@ -34,8 +31,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onNavigateToSchedule,
   onNavigateToSubjects,
   onUploadNewInp,
-  onRefreshSchedule,
-  isRefreshing = false,
 }) => {
   const firstName = inp.studentName
     ? inp.studentName.split(' ')[1] || inp.studentName.split(' ')[0]
@@ -275,23 +270,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto text-[11px] sm:text-xs text-slate-400 dark:text-slate-500 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-between sm:justify-end">
-          <span>Оновити дані розкладу</span>
-          <button
-            type="button"
-            onClick={onRefreshSchedule}
-            disabled={isRefreshing}
-            title="Оновити зараз"
-            aria-label={isRefreshing ? 'Розклад оновлюється' : 'Оновити розклад зараз'}
-            aria-busy={isRefreshing}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-all duration-200 active:scale-90 cursor-pointer disabled:cursor-wait disabled:active:scale-100"
-          >
-            <RefreshCw
-              aria-hidden="true"
-              className={`w-3.5 h-3.5 ${isRefreshing ? 'motion-safe:animate-spin [animation-duration:700ms] text-blue-600 dark:text-blue-400' : ''}`}
-            />
-          </button>
-        </div>
       </div>
 
       {/* Preview Section */}

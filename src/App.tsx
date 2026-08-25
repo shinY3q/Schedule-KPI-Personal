@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import type { INPData, INPSubject } from './types/inp';
 import type { GroupScheduleRaw } from './types/schedule';
 import { Sidebar } from './components/Sidebar';
@@ -15,8 +15,6 @@ import { findGroupByName, fetchGroupSchedule, fetchCurrentWeekInfo } from './ser
 import { ThemeProvider } from './context/ThemeContext';
 import { safeStorage } from './services/storage';
 import { normalizeINPData } from './services/inpNormalization';
-
-const REFRESH_SPIN_DURATION_MS = 700;
 
 export function AppContent() {
   // If user previously uploaded INP and didn't log out or clear storage, stay logged in
@@ -67,8 +65,6 @@ export function AppContent() {
   });
 
   const [selectedSubject, setSelectedSubject] = useState<INPSubject | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const latestRefreshRequest = useRef(0);
 
   const [autoUpdate, setAutoUpdate] = useState<boolean>(() => {
     const saved = safeStorage.getItem('kpi_auto_update');
@@ -85,10 +81,6 @@ export function AppContent() {
   }, [currentTab]);
 
   const loadScheduleForGroup = async (groupName: string) => {
-    const requestId = latestRefreshRequest.current + 1;
-    latestRefreshRequest.current = requestId;
-    const startedAt = Date.now();
-    setIsRefreshing(true);
     try {
       const groupObj = await findGroupByName(groupName);
       if (groupObj) {
@@ -102,20 +94,6 @@ export function AppContent() {
       }
     } catch (err) {
       console.warn('Could not fetch schedule from API, using cached/empty fallback:', err);
-    } finally {
-      const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-      if (!prefersReducedMotion) {
-        const elapsed = Date.now() - startedAt;
-        const completedCycles = Math.max(1, Math.ceil(elapsed / REFRESH_SPIN_DURATION_MS));
-        const remaining = completedCycles * REFRESH_SPIN_DURATION_MS - elapsed;
-        if (remaining > 0) {
-          await new Promise(resolve => window.setTimeout(resolve, remaining));
-        }
-      }
-
-      if (requestId === latestRefreshRequest.current) {
-        setIsRefreshing(false);
-      }
     }
   };
 
@@ -218,8 +196,6 @@ export function AppContent() {
       <div className="flex-1 flex flex-col min-w-0 min-h-screen min-h-[100dvh] overflow-x-hidden">
         <Header
           inp={inpData}
-          onRefresh={() => loadScheduleForGroup(inpData.group)}
-          isRefreshing={isRefreshing}
         />
 
         <main id="main-content" tabIndex={-1} className="app-main flex-1 w-full">
@@ -232,8 +208,6 @@ export function AppContent() {
               onNavigateToSchedule={() => setCurrentTab('schedule')}
               onNavigateToSubjects={() => setCurrentTab('subjects')}
               onUploadNewInp={() => setCurrentTab('settings')}
-              onRefreshSchedule={() => loadScheduleForGroup(inpData.group)}
-              isRefreshing={isRefreshing}
             />
           )}
 

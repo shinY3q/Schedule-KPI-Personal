@@ -1,20 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, User, Check, RefreshCw, Sun, Moon, Laptop, CheckCheck } from 'lucide-react';
+import { Bell, User, Check, Sun, Moon, Laptop, CheckCheck } from 'lucide-react';
 import type { INPData } from '../types/inp';
 import { useTheme } from '../context/ThemeContext';
 import { safeStorage } from '../services/storage';
 
 interface HeaderProps {
   inp: INPData;
-  onRefresh: () => void;
-  isRefreshing?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  inp,
-  onRefresh,
-  isRefreshing = false,
-}) => {
+export const Header: React.FC<HeaderProps> = ({ inp }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [hasUnreadNotification, setHasUnreadNotification] = useState<boolean>(() => {
     return safeStorage.getItem('kpi_notification_read') !== 'true';
@@ -128,22 +122,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Laptop className="w-3.5 h-3.5" />
           </button>
         </div>
-
-        {/* Refresh button */}
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          title="Оновити розклад"
-          aria-label={isRefreshing ? 'Розклад оновлюється' : 'Оновити розклад'}
-          aria-busy={isRefreshing}
-          className="p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-[color,background-color,transform] duration-200 relative cursor-pointer active:scale-90 disabled:cursor-wait disabled:active:scale-100"
-        >
-          <RefreshCw
-            aria-hidden="true"
-            className={`w-4 h-4 ${isRefreshing ? 'motion-safe:animate-spin [animation-duration:700ms] text-blue-600 dark:text-blue-400' : ''}`}
-          />
-        </button>
 
         {/* Notifications */}
         <div className="relative" ref={notificationRef}>
