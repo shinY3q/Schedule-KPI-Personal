@@ -6,16 +6,10 @@ import {
   Sun,
   Moon,
   Laptop,
-  ClipboardCopy,
-  Check,
 } from 'lucide-react';
 import type { INPData } from '../types/inp';
 import { useTheme } from '../context/ThemeContext';
 import { safeStorage } from '../services/storage';
-import {
-  copyDiagnosticReport,
-  createPDFUploadDiagnostics,
-} from '../services/pdfUploadDiagnostics';
 
 interface SettingsViewProps {
   inp: INPData;
@@ -51,8 +45,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [dragOver, setDragOver] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [diagnosticReport, setDiagnosticReport] = useState('');
-  const [reportCopyStatus, setReportCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   const { theme, setTheme } = useTheme();
 
@@ -71,26 +63,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
-    const diagnostics = createPDFUploadDiagnostics(file);
     setIsUploading(true);
     setErrorMsg('');
     setSuccessMsg('');
-    setDiagnosticReport('');
-    setReportCopyStatus('idle');
     try {
-      diagnostics.log('parser_import_started');
       const { parsePdfINP } = await import('../services/pdfParser');
-      diagnostics.log('parser_import_completed');
-      const parsed = await parsePdfINP(file, diagnostics);
+      const parsed = await parsePdfINP(file);
       onUpdateInp(parsed);
       setSuccessMsg('ІНП успішно оновлено!');
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
-      const errorCode = err && typeof err === 'object' && 'code' in err
-        ? String((err as { code?: unknown }).code ?? '')
-        : undefined;
-      diagnostics.fail(err, errorCode);
-      setDiagnosticReport(diagnostics.toText());
       console.error(err);
       setErrorMsg(
         err instanceof Error && err.name === 'PDFImportError'
@@ -100,11 +82,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     } finally {
       setIsUploading(false);
     }
-  };
-
-  const handleCopyDiagnosticReport = async () => {
-    const copied = await copyDiagnosticReport(diagnosticReport);
-    setReportCopyStatus(copied ? 'copied' : 'failed');
   };
 
   return (
@@ -129,23 +106,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {errorMsg && (
         <div role="alert" className="p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold animate-slide-up">
-          <p>{errorMsg}</p>
-          {diagnosticReport && (
-            <button
-              type="button"
-              onClick={handleCopyDiagnosticReport}
-              className="mt-3 min-h-9 rounded-xl border border-amber-300 dark:border-amber-700 bg-white/70 dark:bg-slate-900/50 px-3 py-2 text-[11px] font-bold inline-flex items-center justify-center gap-1.5 transition-colors hover:bg-white dark:hover:bg-slate-900 cursor-pointer"
-            >
-              {reportCopyStatus === 'copied' ? <Check className="w-3.5 h-3.5" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
-              <span>
-                {reportCopyStatus === 'copied'
-                  ? 'Технічний звіт скопійовано'
-                  : reportCopyStatus === 'failed'
-                    ? 'Не вдалося скопіювати звіт'
-                    : 'Скопіювати технічний звіт'}
-              </span>
-            </button>
-          )}
+          {errorMsg}
         </div>
       )}
 

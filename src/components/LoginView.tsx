@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
-import { Upload, FileText, Sparkles, ShieldCheck, ClipboardCopy, Check } from 'lucide-react';
+import { Upload, FileText, Sparkles, ShieldCheck } from 'lucide-react';
 import type { INPData } from '../types/inp';
-import {
-  copyDiagnosticReport,
-  createPDFUploadDiagnostics,
-} from '../services/pdfUploadDiagnostics';
 
 interface LoginViewProps {
   onLoginSuccess: (inp: INPData) => void;
@@ -14,28 +10,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [diagnosticReport, setDiagnosticReport] = useState('');
-  const [reportCopyStatus, setReportCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
-    const diagnostics = createPDFUploadDiagnostics(file);
     setIsUploading(true);
     setErrorMsg('');
-    setDiagnosticReport('');
-    setReportCopyStatus('idle');
     try {
-      diagnostics.log('parser_import_started');
       const { parsePdfINP } = await import('../services/pdfParser');
-      diagnostics.log('parser_import_completed');
-      const parsed = await parsePdfINP(file, diagnostics);
+      const parsed = await parsePdfINP(file);
       onLoginSuccess(parsed);
     } catch (err) {
-      const errorCode = err && typeof err === 'object' && 'code' in err
-        ? String((err as { code?: unknown }).code ?? '')
-        : undefined;
-      diagnostics.fail(err, errorCode);
-      setDiagnosticReport(diagnostics.toText());
       console.error('Failed to parse uploaded PDF:', err);
       setErrorMsg(
         err instanceof Error && err.name === 'PDFImportError'
@@ -45,11 +29,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     } finally {
       setIsUploading(false);
     }
-  };
-
-  const handleCopyDiagnosticReport = async () => {
-    const copied = await copyDiagnosticReport(diagnosticReport);
-    setReportCopyStatus(copied ? 'copied' : 'failed');
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -96,23 +75,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           
           {errorMsg && (
             <div role="alert" className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold text-center animate-slide-up">
-              <p>{errorMsg}</p>
-              {diagnosticReport && (
-                <button
-                  type="button"
-                  onClick={handleCopyDiagnosticReport}
-                  className="mx-auto mt-3 min-h-9 rounded-xl border border-amber-300 dark:border-amber-700 bg-white/70 dark:bg-slate-900/50 px-3 py-2 text-[11px] font-bold inline-flex items-center justify-center gap-1.5 transition-colors hover:bg-white dark:hover:bg-slate-900 cursor-pointer"
-                >
-                  {reportCopyStatus === 'copied' ? <Check className="w-3.5 h-3.5" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
-                  <span>
-                    {reportCopyStatus === 'copied'
-                      ? 'Технічний звіт скопійовано'
-                      : reportCopyStatus === 'failed'
-                        ? 'Не вдалося скопіювати звіт'
-                        : 'Скопіювати технічний звіт'}
-                  </span>
-                </button>
-              )}
+              {errorMsg}
             </div>
           )}
 

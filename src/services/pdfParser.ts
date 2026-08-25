@@ -1,7 +1,6 @@
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import PDFWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker';
 import type { INPData } from '../types/inp';
-import type { PDFUploadDiagnostics } from './pdfUploadDiagnostics';
 import {
   extractDataFromPages,
   type ExtractedPDFPage,
@@ -72,21 +71,12 @@ function friendlyPDFError(error: unknown): PDFImportError {
   return new PDFImportError('read_failed', 'Не вдалося відкрити PDF у браузері. Оновіть сторінку або завантажте оригінальний файл ІНП ще раз.', { cause: error });
 }
 
-export async function parsePdfINP(
-  file: File,
-  diagnostics?: PDFUploadDiagnostics,
-): Promise<INPData> {
+export async function parsePdfINP(file: File): Promise<INPData> {
   try {
-    diagnostics?.log('file_read_started');
     const arrayBuffer = await readFileAsArrayBuffer(file);
     const bytes = new Uint8Array(arrayBuffer);
-    diagnostics?.log('file_read_completed', { sizeBytes: bytes.byteLength });
     validatePDFBytes(bytes);
-    diagnostics?.log('pdf_signature_valid');
 
-    diagnostics?.log('document_load_started', {
-      workerConfigured: pdfjsLib.GlobalWorkerOptions.workerPort !== null,
-    });
     const loadingTask = pdfjsLib.getDocument({
       data: bytes,
       useWasm: false,
@@ -95,7 +85,6 @@ export async function parsePdfINP(
       isImageDecoderSupported: false,
     });
     const pdf = await loadingTask.promise;
-    diagnostics?.log('document_loaded', { pages: pdf.numPages });
 
     try {
       const pages: ExtractedPDFPage[] = [];
@@ -103,21 +92,28 @@ export async function parsePdfINP(
       for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
         const page = await pdf.getPage(pageNumber);
         const viewport = page.getViewport({ scale: 1 });
-        const textContent = await page.getTextContent();
-        const items = textContent.items.flatMap(item => {
-          if (!('str' in item) || !item.str.trim()) return [];
-          return [{
-            str: item.str,
-            x: Number(item.transform[4]),
-            y: Number(item.transform[5]),
-          }];
-        });
+        const items: ExtractedPDFPage['items'] = [];
+        const textReader = page.streamTextContent().getReader();
+
+        try {
+          while (true) {
+            const chunk = await textReader.read();
+            if (chunk.done) break;
+
+            for (const item of chunk.value.items) {
+              if (!('str' in item) || !item.str.trim()) continue;
+              items.push({
+                str: item.str,
+                x: Number(item.transform[4]),
+                y: Number(item.transform[5]),
+              });
+            }
+          }
+        } finally {
+          textReader.releaseLock();
+        }
 
         pages.push({ width: viewport.width, items });
-        diagnostics?.log('page_text_extracted', {
-          page: pageNumber,
-          textItems: items.length,
-        });
         page.cleanup();
       }
 
@@ -126,17 +122,10 @@ export async function parsePdfINP(
         .reduce((length, item) => length + item.str.replace(/\s/g, '').length, 0);
 
       if (textLength < 20) {
-        diagnostics?.log('text_layer_missing', { textCharacters: textLength });
         throw new PDFImportError('no_text', 'У PDF немає текстового шару. Завантажте оригінальний ІНП з Електронного кампусу, а не скан або фото.');
       }
-      diagnostics?.log('text_layer_valid', { textCharacters: textLength });
 
       const result = extractDataFromPages(pages, file.name);
-      diagnostics?.log('inp_data_extracted', {
-        subjects: result.subjects.length,
-        selectiveSubjects: result.subjects.filter(subject => subject.category === 'selective').length,
-        groupFound: Boolean(result.group),
-      });
       if (result.subjects.length === 0) {
         throw new PDFImportError('no_subjects', 'У файлі не знайдено таблицю дисциплін. Завантажте повний оригінальний ІНП з Електронного кампусу.');
       }
@@ -144,14 +133,12 @@ export async function parsePdfINP(
         throw new PDFImportError('missing_group', 'У PDF не знайдено навчальну групу. Перевірте, що завантажено повний ІНП, а не окрему сторінку.');
       }
 
-      diagnostics?.log('completed');
       return result;
     } finally {
       await loadingTask.destroy();
     }
   } catch (error) {
     const friendlyError = friendlyPDFError(error);
-    diagnostics?.fail(error, friendlyError.code);
     console.error('Error parsing PDF:', friendlyError.code, error);
     throw friendlyError;
   }
