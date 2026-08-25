@@ -141,13 +141,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <span>{isUploading ? 'Обробка...' : 'Змінити файл'}</span>
                 <input
                   type="file"
-                  accept=".pdf,application/pdf"
+                  accept=".pdf,application/pdf,application/x-pdf"
                   disabled={isUploading}
                   className="sr-only"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      handleFileUpload(e.target.files[0]);
-                    }
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    event.currentTarget.value = '';
+                    if (file) void handleFileUpload(file);
                   }}
                 />
               </label>
@@ -164,7 +164,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 e.preventDefault();
                 setDragOver(false);
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                  handleFileUpload(e.dataTransfer.files[0]);
+                  void handleFileUpload(e.dataTransfer.files[0]);
                 }
               }}
               className={`p-4 border-2 border-dashed rounded-2xl text-center transition-all duration-200 ${

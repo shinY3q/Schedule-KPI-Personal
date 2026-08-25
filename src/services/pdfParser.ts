@@ -1,5 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-import pdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
+import PDFWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker';
 import type { INPData } from '../types/inp';
 import {
   extractDataFromPages,
@@ -9,7 +9,7 @@ import {
 export { extractDataFromText } from './pdfParserCore';
 
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+  pdfjsLib.GlobalWorkerOptions.workerPort = new PDFWorker();
 }
 
 export class PDFImportError extends Error {
@@ -81,6 +81,8 @@ export async function parsePdfINP(file: File): Promise<INPData> {
       data: bytes,
       useWasm: false,
       useWorkerFetch: false,
+      isOffscreenCanvasSupported: false,
+      isImageDecoderSupported: false,
     });
     const pdf = await loadingTask.promise;
 

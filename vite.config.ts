@@ -5,4 +5,10 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  build: {
+    target: 'safari14',
+  },
+  worker: {
+    format: 'iife',
+  },
 })

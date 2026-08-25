@@ -191,8 +191,8 @@ function parsePositionedSubject(
   let individualTask = '-';
 
   if (remaining.length >= 3) {
-    individualTask = remaining.at(-1) ?? '-';
-    mkrText = remaining.at(-2) ?? '-';
+    individualTask = remaining[remaining.length - 1] ?? '-';
+    mkrText = remaining[remaining.length - 2] ?? '-';
     control = normalizeWhitespace(remaining.slice(0, -2).join(' ')) || '-';
   } else if (remaining.length === 2) {
     mkrText = remaining[1];

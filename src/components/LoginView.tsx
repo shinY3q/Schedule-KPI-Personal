@@ -36,11 +36,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      if (file.type === 'application/pdf' || file.name.toLocaleLowerCase().endsWith('.pdf')) {
-        handleFileUpload(file);
-      } else {
-        setErrorMsg('Будь ласка, завантажте файл у форматі PDF.');
-      }
+      void handleFileUpload(file);
     }
   };
 
@@ -116,13 +112,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <span>Обрати файл ІНП (.pdf)</span>
               <input
                 type="file"
-                accept=".pdf,application/pdf"
+                accept=".pdf,application/pdf,application/x-pdf"
                 disabled={isUploading}
                 className="sr-only"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files.length > 0) {
-                    handleFileUpload(e.target.files[0]);
-                  }
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  event.currentTarget.value = '';
+                  if (file) void handleFileUpload(file);
                 }}
               />
             </label>
