@@ -280,14 +280,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <button
             type="button"
             onClick={onRefreshSchedule}
+            disabled={isRefreshing}
             title="Оновити зараз"
             aria-label={isRefreshing ? 'Розклад оновлюється' : 'Оновити розклад зараз'}
             aria-busy={isRefreshing}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-all duration-200 active:scale-90 cursor-pointer"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-all duration-200 active:scale-90 cursor-pointer disabled:cursor-wait disabled:active:scale-100"
           >
             <RefreshCw
               aria-hidden="true"
-              className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`}
+              className={`w-3.5 h-3.5 ${isRefreshing ? 'motion-safe:animate-spin [animation-duration:700ms] text-blue-600 dark:text-blue-400' : ''}`}
             />
           </button>
         </div>

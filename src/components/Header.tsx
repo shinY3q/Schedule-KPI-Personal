@@ -133,14 +133,15 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onRefresh}
+          disabled={isRefreshing}
           title="Оновити розклад"
           aria-label={isRefreshing ? 'Розклад оновлюється' : 'Оновити розклад'}
           aria-busy={isRefreshing}
-          className="p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-[color,background-color,transform] duration-200 relative cursor-pointer active:scale-90"
+          className="p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-[color,background-color,transform] duration-200 relative cursor-pointer active:scale-90 disabled:cursor-wait disabled:active:scale-100"
         >
           <RefreshCw
             aria-hidden="true"
-            className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`}
+            className={`w-4 h-4 ${isRefreshing ? 'motion-safe:animate-spin [animation-duration:700ms] text-blue-600 dark:text-blue-400' : ''}`}
           />
         </button>
 
