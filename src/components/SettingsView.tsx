@@ -44,6 +44,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const { theme, setTheme } = useTheme();
 
@@ -63,6 +64,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const handleFileUpload = async (file: File) => {
     if (!file) return;
     setIsUploading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
     try {
       const { parsePdfINP } = await import('../services/pdfParser');
       const parsed = await parsePdfINP(file);
@@ -71,6 +74,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
       console.error(err);
+      setErrorMsg(
+        err instanceof Error && err.name === 'PDFImportError'
+          ? err.message
+          : 'Не вдалося відкрити файл. Завантажте оригінальний PDF-файл ІНП.',
+      );
     } finally {
       setIsUploading(false);
     }
@@ -96,6 +104,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       )}
 
+      {errorMsg && (
+        <div role="alert" className="p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold animate-slide-up">
+          {errorMsg}
+        </div>
+      )}
+
       {/* 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         
@@ -115,10 +129,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title={inp.fileName}>
-                    {inp.fileName || 'ІНП_ІК-31_2026.pdf'}
+                    {inp.fileName || 'Файл не вказано'}
                   </div>
                   <div className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500">
-                    {inp.uploadDate ? `Завантажено: ${inp.uploadDate}` : 'Завантажено'} • Група: {inp.group || 'ІК-31'}
+                    {inp.uploadDate ? `Завантажено: ${inp.uploadDate}` : 'Дата не вказана'} • Група: {inp.group || 'Не вказано'}
                   </div>
                 </div>
               </div>
@@ -127,7 +141,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <span>{isUploading ? 'Обробка...' : 'Змінити файл'}</span>
                 <input
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,application/pdf"
                   disabled={isUploading}
                   className="sr-only"
                   onChange={(e) => {

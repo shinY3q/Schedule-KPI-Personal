@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span>КПІ</span>
             <span className="text-slate-500 dark:text-slate-400 font-normal hidden sm:inline">Мій розклад</span>
             <span className="md:hidden max-[374px]:hidden text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold border border-blue-200/60 dark:border-blue-800/60 ml-0.5">
-              {inp.group || 'ІК-31'}
+              {inp.group || '—'}
             </span>
           </h1>
         </div>

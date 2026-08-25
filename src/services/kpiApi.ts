@@ -1,5 +1,4 @@
 import type { GroupScheduleRaw, KPIGroup } from '../types/schedule';
-import { RAW_SCHEDULE_IK31 } from './sampleData';
 
 const BASE_URL = 'https://api.campus.kpi.ua';
 
@@ -41,15 +40,7 @@ export async function fetchAllGroups(): Promise<KPIGroup[]> {
     console.warn('Proxy fetch failed:', err);
   }
 
-  return [
-    { id: 3672, name: 'ІК-31', faculty: 'ФІОТ' },
-    { id: 3673, name: 'ІК-32', faculty: 'ФІОТ' },
-    { id: 3674, name: 'ІК-33', faculty: 'ФІОТ' },
-    { id: 3495, name: 'ІП-31', faculty: 'ФІОТ' },
-    { id: 3349, name: 'ІС-31', faculty: 'ФІОТ' },
-    { id: 3688, name: 'ІО-31', faculty: 'ФІОТ' },
-    { id: 3095, name: 'ІА-31', faculty: 'ФІОТ' },
-  ];
+  return [];
 }
 
 export async function findGroupByName(groupName: string): Promise<KPIGroup | null> {
@@ -101,7 +92,11 @@ export async function fetchGroupSchedule(groupId: number | string): Promise<Grou
     console.warn('Proxy fetchGroupSchedule failed:', err);
   }
 
-  return RAW_SCHEDULE_IK31;
+  return {
+    groupCode: String(groupId),
+    scheduleFirstWeek: [],
+    scheduleSecondWeek: [],
+  };
 }
 
 export interface CurrentTimeInfo {

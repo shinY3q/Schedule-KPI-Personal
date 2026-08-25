@@ -116,7 +116,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 gap-2 border-b border-slate-100 dark:border-slate-800">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-              {activeDay.dayFull}, {activeDay.dateStr}.2026
+              {activeDay.dayFull}{activeDay.dateStr ? `, ${activeDay.dateStr}` : ''}
             </h2>
             <span className="text-[11px] sm:text-xs text-slate-400 dark:text-slate-500">
               {activeDay.lessons.length > 0
@@ -159,7 +159,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   <div className="sm:w-36 flex-shrink-0">
                     <div className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-100">
                       <Clock className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-blue-600 dark:text-blue-400 transition-transform duration-200 group-hover:scale-110" />
-                      <span>{lesson.timeStart} – {lesson.timeEnd}</span>
+                      <span>{lesson.timeEnd ? `${lesson.timeStart} – ${lesson.timeEnd}` : lesson.timeStart}</span>
                     </div>
                     <div className="text-[10px] sm:text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5 pl-5 sm:pl-6">
                       {lesson.pairNumber}-а пара
@@ -185,11 +185,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                     <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-0.5">
                       <div className="flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-                        <span>{lesson.location}</span>
+                        <span>{lesson.location || 'Не вказано'}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-                        <span>{lesson.lecturerName}</span>
+                        <span>{lesson.lecturerName || 'Не вказано'}</span>
                       </div>
                     </div>
                   </div>

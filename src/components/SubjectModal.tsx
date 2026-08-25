@@ -56,7 +56,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
       ) {
         occurrences.push({
           day: d.dayFull,
-          time: `${l.timeStart} – ${l.timeEnd}`,
+          time: l.timeEnd ? `${l.timeStart} – ${l.timeEnd}` : l.timeStart,
           type: l.lessonTypeLabel,
           location: l.location,
           teacher: l.lecturerName,
@@ -270,7 +270,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200/50 dark:border-slate-700/50">
                 <span className="text-slate-500 dark:text-slate-400">Модульний контроль (МКР):</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{subject.mkr || 1} шт.</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{subject.mkr ?? '—'} шт.</span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-500 dark:text-slate-400">Індивідуальне завдання:</span>

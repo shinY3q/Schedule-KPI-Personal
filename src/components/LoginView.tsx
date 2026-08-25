@@ -18,14 +18,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     try {
       const { parsePdfINP } = await import('../services/pdfParser');
       const parsed = await parsePdfINP(file);
-      if (parsed.subjects.length === 0) {
-        setErrorMsg('Не вдалося розпізнати предмети у PDF. Переконайтеся, що файл містить актуальний ІНП.');
-        return;
-      }
       onLoginSuccess(parsed);
     } catch (err) {
       console.error('Failed to parse uploaded PDF:', err);
-      setErrorMsg('Помилка при обробці PDF. Перевірте формат файлу.');
+      setErrorMsg(
+        err instanceof Error && err.name === 'PDFImportError'
+          ? err.message
+          : 'Не вдалося відкрити файл. Завантажте оригінальний PDF-файл ІНП.',
+      );
     } finally {
       setIsUploading(false);
     }
@@ -36,7 +36,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      if (file.type === 'application/pdf' || file.name.toLocaleLowerCase().endsWith('.pdf')) {
         handleFileUpload(file);
       } else {
         setErrorMsg('Будь ласка, завантажте файл у форматі PDF.');
@@ -116,7 +116,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <span>Обрати файл ІНП (.pdf)</span>
               <input
                 type="file"
-                accept=".pdf"
+                accept=".pdf,application/pdf"
                 disabled={isUploading}
                 className="sr-only"
                 onChange={(e) => {

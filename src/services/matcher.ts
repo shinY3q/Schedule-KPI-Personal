@@ -133,10 +133,6 @@ export function filterAndProcessSchedule(
     : inp.subjects;
 
   const processWeek = (daysRaw: KPIDaySchedule[], weekNum: 1 | 2): WeekSchedule => {
-    // 2026 calendar: Week 1 Monday is 31.08.2026, Week 2 Monday is 07.09.2026
-    const baseMonday = weekNum === 1 ? new Date(2026, 7, 31) : new Date(2026, 8, 7);
-    const dateRange = weekNum === 1 ? '31.08 - 05.09.2026' : '07.09 - 12.09.2026';
-
     const daysOrder = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     const days: DaySchedule[] = daysOrder.map((dayKey, idx) => {
       const dayMeta = DAY_MAP[dayKey] || {
@@ -145,12 +141,6 @@ export function filterAndProcessSchedule(
         full: dayKey,
         dayIndex: idx + 1,
       };
-
-      const dayDate = new Date(baseMonday);
-      dayDate.setDate(baseMonday.getDate() + idx);
-      const dateFormatted = `${String(dayDate.getDate()).padStart(2, '0')}.${String(
-        dayDate.getMonth() + 1
-      ).padStart(2, '0')}`;
 
       const rawDay = daysRaw.find(
         d => d.day === dayKey || d.day.startsWith(dayKey) || (DAY_MAP[d.day] && DAY_MAP[d.day].short === dayKey)
@@ -172,12 +162,12 @@ export function filterAndProcessSchedule(
               id: `${weekNum}-${dayKey}-${pair.time}-${pair.name}`,
               pairNumber,
               timeStart,
-              timeEnd: timeEnd || '10:05',
+              timeEnd,
               subjectName: pair.name,
               lessonType: type,
               lessonTypeLabel: label,
-              lecturerName: pair.lecturer?.name || 'Викладач кафедри',
-              location: pair.location || 'Корпус 18, ауд. 422',
+              lecturerName: pair.lecturer?.name || '',
+              location: pair.location || '',
               isMatched: true,
               matchedSubject,
               rawLesson: pair,
@@ -192,7 +182,7 @@ export function filterAndProcessSchedule(
         dayCode: dayMeta.code,
         dayShort: dayMeta.short,
         dayFull: dayMeta.full,
-        dateStr: dateFormatted,
+        dateStr: '',
         lessons,
       };
     });
@@ -201,7 +191,7 @@ export function filterAndProcessSchedule(
       weekNumber: weekNum,
       weekLabel: `${weekNum} тиждень`,
       isOdd: weekNum === 1,
-      dateRange,
+      dateRange: '',
       days,
     };
   };
