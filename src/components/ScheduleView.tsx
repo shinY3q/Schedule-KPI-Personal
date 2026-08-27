@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
 import {
-  Clock,
-  MapPin,
-  User,
   CheckCircle2,
-  Coffee
+  Coffee,
 } from 'lucide-react';
 import type { WeekSchedule, DaySchedule } from '../types/schedule';
 import type { INPSubject } from '../types/inp';
+import {
+  getSubjectConferenceLink,
+  type SubjectConferenceLinks,
+} from '../services/conferenceLinks';
+import { ScheduleLessonCard } from './ScheduleLessonCard';
 
 interface ScheduleViewProps {
   weekSchedule: WeekSchedule;
   currentWeekNum: 1 | 2;
   onSwitchWeek: (week: 1 | 2) => void;
   onSelectSubject: (subject: INPSubject) => void;
+  conferenceLinks: SubjectConferenceLinks;
+  onSaveConferenceUrl: (subject: INPSubject, url: string) => void;
+  onRemoveConferenceUrl: (subject: INPSubject) => void;
 }
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({
@@ -21,6 +26,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   currentWeekNum,
   onSwitchWeek,
   onSelectSubject,
+  conferenceLinks,
+  onSaveConferenceUrl,
+  onRemoveConferenceUrl,
 }) => {
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
 
@@ -136,72 +144,16 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         {/* List of lessons */}
         {activeDay.lessons.length > 0 ? (
           <div className="space-y-3 pt-1">
-            {activeDay.lessons.map((lesson) => {
-              const typeColorClass =
-                lesson.lessonType === 'lecture'
-                  ? 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200/60 dark:border-purple-800/60'
-                  : lesson.lessonType === 'practice'
-                  ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200/60 dark:border-amber-800/60'
-                  : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/60';
-
-              return (
-                <button
-                  type="button"
-                  key={lesson.id}
-                  onClick={() => {
-                    if (lesson.matchedSubject) {
-                      onSelectSubject(lesson.matchedSubject);
-                    }
-                  }}
-                  aria-label={`Відкрити ${lesson.subjectName}, ${lesson.timeStart}–${lesson.timeEnd}`}
-                  className="w-full text-left p-4 sm:p-5 rounded-2xl bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-750 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 cursor-pointer group"
-                >
-                  <div className="sm:w-36 flex-shrink-0">
-                    <div className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-100">
-                      <Clock className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-blue-600 dark:text-blue-400 transition-transform duration-200 group-hover:scale-110" />
-                      <span>{lesson.timeEnd ? `${lesson.timeStart} – ${lesson.timeEnd}` : lesson.timeStart}</span>
-                    </div>
-                    <div className="text-[10px] sm:text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5 pl-5 sm:pl-6">
-                      {lesson.pairNumber}-а пара
-                    </div>
-                  </div>
-
-                  <div className="flex-1 space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-lg border transition-colors duration-200 ${typeColorClass}`}>
-                        {lesson.lessonTypeLabel}
-                      </span>
-                      {lesson.matchedSubject?.category === 'selective' && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                          Вибіркова (ІНП)
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200 leading-snug">
-                      {lesson.subjectName}
-                    </h3>
-
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-                        <span>{lesson.location || 'Не вказано'}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-                        <span>{lesson.lecturerName || 'Не вказано'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="self-end sm:self-center">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-750 group-hover:bg-blue-600 dark:group-hover:bg-blue-500 flex items-center justify-center transition-all duration-200 group-hover:translate-x-1 shadow-2xs">
-                      <span className="theme-arrow text-slate-400 dark:text-slate-500 group-hover:text-white transition-all duration-200" />
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+            {activeDay.lessons.map((lesson) => (
+              <ScheduleLessonCard
+                key={lesson.id}
+                lesson={lesson}
+                conferenceUrl={getSubjectConferenceLink(conferenceLinks, lesson.matchedSubject)}
+                onSelectSubject={onSelectSubject}
+                onSaveConferenceUrl={onSaveConferenceUrl}
+                onRemoveConferenceUrl={onRemoveConferenceUrl}
+              />
+            ))}
           </div>
         ) : (
           <div className="py-16 text-center space-y-3 animate-slide-up">

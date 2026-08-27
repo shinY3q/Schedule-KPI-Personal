@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { INPData, INPSubject } from './types/inp';
 import type { GroupScheduleRaw } from './types/schedule';
 import { Sidebar } from './components/Sidebar';
@@ -15,6 +15,12 @@ import { findGroupByName, fetchGroupSchedule, fetchCurrentWeekInfo } from './ser
 import { ThemeProvider } from './context/ThemeContext';
 import { safeStorage } from './services/storage';
 import { normalizeINPData } from './services/inpNormalization';
+import {
+  CONFERENCE_LINKS_STORAGE_KEY,
+  getSubjectConferenceLink,
+  getSubjectConferenceKey,
+  type SubjectConferenceLinks,
+} from './services/conferenceLinks';
 
 export function AppContent() {
   // If user previously uploaded INP and didn't log out or clear storage, stay logged in
@@ -65,6 +71,10 @@ export function AppContent() {
   });
 
   const [selectedSubject, setSelectedSubject] = useState<INPSubject | null>(null);
+
+  const [conferenceLinks, setConferenceLinks] = useState<SubjectConferenceLinks>(() => {
+    return safeStorage.getJSON<SubjectConferenceLinks>(CONFERENCE_LINKS_STORAGE_KEY, {});
+  });
 
   const [autoUpdate, setAutoUpdate] = useState<boolean>(() => {
     const saved = safeStorage.getItem('kpi_auto_update');
@@ -146,11 +156,37 @@ export function AppContent() {
     setIsLoggedIn(false);
   };
 
+  const handleSaveConferenceLink = (subject: INPSubject, url: string) => {
+    setConferenceLinks((current) => {
+      const next = { ...current, [getSubjectConferenceKey(subject)]: url };
+      safeStorage.setJSON(CONFERENCE_LINKS_STORAGE_KEY, next);
+      return next;
+    });
+  };
+
+  const handleRemoveConferenceLink = (subject: INPSubject) => {
+    setConferenceLinks((current) => {
+      const key = getSubjectConferenceKey(subject);
+      if (!current[key]) return current;
+
+      const next = { ...current };
+      delete next[key];
+      safeStorage.setJSON(CONFERENCE_LINKS_STORAGE_KEY, next);
+      return next;
+    });
+  };
+
+  const handleCloseSubject = useCallback(() => {
+    setSelectedSubject(null);
+  }, []);
+
   const handleResetFirstVisit = () => {
     safeStorage.removeItem('kpi_has_uploaded_inp');
     safeStorage.removeItem('kpi_inp_data');
     safeStorage.removeItem('kpi_notification_read');
     safeStorage.removeItem('kpi_raw_schedule');
+    safeStorage.removeItem(CONFERENCE_LINKS_STORAGE_KEY);
+    setConferenceLinks({});
     setInpData({
       studentName: '',
       group: '',
@@ -217,6 +253,9 @@ export function AppContent() {
               currentWeekNum={currentWeekNum}
               onSwitchWeek={setCurrentWeekNum}
               onSelectSubject={setSelectedSubject}
+              conferenceLinks={conferenceLinks}
+              onSaveConferenceUrl={handleSaveConferenceLink}
+              onRemoveConferenceUrl={handleRemoveConferenceLink}
             />
           )}
 
@@ -224,6 +263,7 @@ export function AppContent() {
             <SubjectsView
               inp={inpData}
               onSelectSubject={setSelectedSubject}
+              conferenceLinks={conferenceLinks}
             />
           )}
 
@@ -249,9 +289,13 @@ export function AppContent() {
 
       {selectedSubject && (
         <SubjectModal
+          key={selectedSubject.id}
           subject={selectedSubject}
-          onClose={() => setSelectedSubject(null)}
+          onClose={handleCloseSubject}
           weekSchedule={activeWeekSchedule}
+          conferenceUrl={getSubjectConferenceLink(conferenceLinks, selectedSubject)}
+          onSaveConferenceUrl={handleSaveConferenceLink}
+          onRemoveConferenceUrl={handleRemoveConferenceLink}
         />
       )}
     </div>
