@@ -6,7 +6,8 @@ import {
 import type { WeekSchedule, DaySchedule } from '../types/schedule';
 import type { INPSubject } from '../types/inp';
 import {
-  getSubjectConferenceLink,
+  getSubjectConferenceLinks,
+  type SubjectConferenceLinkSet,
   type SubjectConferenceLinks,
 } from '../services/conferenceLinks';
 import { ScheduleLessonCard } from './ScheduleLessonCard';
@@ -17,8 +18,7 @@ interface ScheduleViewProps {
   onSwitchWeek: (week: 1 | 2) => void;
   onSelectSubject: (subject: INPSubject) => void;
   conferenceLinks: SubjectConferenceLinks;
-  onSaveConferenceUrl: (subject: INPSubject, url: string) => void;
-  onRemoveConferenceUrl: (subject: INPSubject) => void;
+  onUpdateConferenceLinks: (subject: INPSubject, links: SubjectConferenceLinkSet) => void;
 }
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({
@@ -27,8 +27,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   onSwitchWeek,
   onSelectSubject,
   conferenceLinks,
-  onSaveConferenceUrl,
-  onRemoveConferenceUrl,
+  onUpdateConferenceLinks,
 }) => {
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
 
@@ -148,10 +147,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               <ScheduleLessonCard
                 key={lesson.id}
                 lesson={lesson}
-                conferenceUrl={getSubjectConferenceLink(conferenceLinks, lesson.matchedSubject)}
+                conferenceLinks={getSubjectConferenceLinks(conferenceLinks, lesson.matchedSubject)}
                 onSelectSubject={onSelectSubject}
-                onSaveConferenceUrl={onSaveConferenceUrl}
-                onRemoveConferenceUrl={onRemoveConferenceUrl}
+                onUpdateConferenceLinks={onUpdateConferenceLinks}
               />
             ))}
           </div>

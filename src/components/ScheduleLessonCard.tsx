@@ -1,82 +1,52 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useId, useState } from 'react';
 import {
   CheckCircle2,
   ChevronDown,
-  Copy,
-  CircleAlert,
-  ExternalLink,
+  Clock,
   Info,
-  Link2,
   MapPin,
-  Save,
   User,
   Video,
-  Clock,
 } from 'lucide-react';
 import type { INPSubject } from '../types/inp';
 import type { ProcessedLesson } from '../types/schedule';
-import { normalizeConferenceUrl } from '../services/conferenceLinks';
+import {
+  getActiveConferenceLinksCount,
+  getConferenceLinkFromSet,
+  getConferenceLinkTypeForLesson,
+  type ConferenceLinkType,
+  type SubjectConferenceLinkSet,
+} from '../services/conferenceLinks';
+import { ConferenceLinksEditor } from './ConferenceLinksEditor';
 
 interface ScheduleLessonCardProps {
   lesson: ProcessedLesson;
-  conferenceUrl?: string;
+  conferenceLinks: SubjectConferenceLinkSet;
   onSelectSubject: (subject: INPSubject) => void;
-  onSaveConferenceUrl: (subject: INPSubject, url: string) => void;
-  onRemoveConferenceUrl: (subject: INPSubject) => void;
+  onUpdateConferenceLinks: (subject: INPSubject, links: SubjectConferenceLinkSet) => void;
 }
 
-type Feedback = {
-  tone: 'success' | 'error';
-  message: string;
-} | null;
-
-const copyText = async (value: string): Promise<boolean> => {
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(value);
-      return true;
-    }
-  } catch {
-    // Continue with the Safari/older-browser fallback below.
-  }
-
-  try {
-    const textarea = document.createElement('textarea');
-    textarea.value = value;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    const copied = document.execCommand('copy');
-    textarea.remove();
-    return copied;
-  } catch {
-    return false;
-  }
+const LINK_TYPE_LABELS: Record<ConferenceLinkType, string> = {
+  lecture: 'Лекція',
+  practice: 'Практика',
 };
 
 export const ScheduleLessonCard: React.FC<ScheduleLessonCardProps> = ({
   lesson,
-  conferenceUrl,
+  conferenceLinks,
   onSelectSubject,
-  onSaveConferenceUrl,
-  onRemoveConferenceUrl,
+  onUpdateConferenceLinks,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [conferenceInput, setConferenceInput] = useState(conferenceUrl ?? '');
-  const [conferenceError, setConferenceError] = useState('');
-  const [feedback, setFeedback] = useState<Feedback>(null);
   const panelId = useId();
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setConferenceInput(conferenceUrl ?? '');
-  }, [conferenceUrl]);
-
   const subject = lesson.matchedSubject;
-  const normalizedDraft = normalizeConferenceUrl(conferenceInput);
-  const hasSavedLink = Boolean(conferenceUrl);
+  const currentLinkType = getConferenceLinkTypeForLesson(lesson.lessonType);
+  const currentConferenceUrl = getConferenceLinkFromSet(conferenceLinks, currentLinkType);
+  const configuredLinksCount = getActiveConferenceLinksCount(conferenceLinks);
+  const isSharedMode = conferenceLinks.mode === 'shared';
+  const configuredLinksSummary = isSharedMode
+    ? currentConferenceUrl ? 'Спільне посилання додано.' : 'Спільне посилання не додано.'
+    : `Додано ${configuredLinksCount} з 2.`;
 
   const typeColorClass =
     lesson.lessonType === 'lecture'
@@ -84,46 +54,6 @@ export const ScheduleLessonCard: React.FC<ScheduleLessonCardProps> = ({
       : lesson.lessonType === 'practice'
       ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200/60 dark:border-amber-800/60'
       : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/60';
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!subject) return;
-
-    if (!conferenceInput.trim()) {
-      if (hasSavedLink) {
-        onRemoveConferenceUrl(subject);
-        setConferenceError('');
-        setFeedback({ tone: 'success', message: 'Онлайн-посилання видалено.' });
-      } else {
-        setConferenceError('Вставте посилання на конференцію перед збереженням.');
-        setFeedback(null);
-        inputRef.current?.focus();
-      }
-      return;
-    }
-
-    if (!normalizedDraft) {
-      setConferenceError('Введіть коректне HTTP/HTTPS-посилання на конференцію.');
-      setFeedback(null);
-      inputRef.current?.focus();
-      return;
-    }
-
-    onSaveConferenceUrl(subject, normalizedDraft);
-    setConferenceInput(normalizedDraft);
-    setConferenceError('');
-    setFeedback({ tone: 'success', message: 'Посилання збережено на цьому пристрої.' });
-  };
-
-  const handleCopy = async () => {
-    if (!normalizedDraft) return;
-    const copied = await copyText(normalizedDraft);
-    setFeedback(
-      copied
-        ? { tone: 'success', message: 'Посилання скопійовано.' }
-        : { tone: 'error', message: 'Не вдалося скопіювати. Виділіть посилання вручну.' },
-    );
-  };
 
   return (
     <article
@@ -189,10 +119,10 @@ export const ScheduleLessonCard: React.FC<ScheduleLessonCardProps> = ({
 
         {subject && (
           <div className="flex items-center gap-2 border-t border-slate-200/70 pt-3 dark:border-slate-700/70 lg:border-0 lg:pt-0">
-            <div className="flex min-w-0 flex-1 items-center gap-2 lg:min-w-40 lg:flex-none">
+            <div className="flex min-w-0 flex-1 items-center gap-2 lg:min-w-44 lg:flex-none">
               <span
                 className={`inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${
-                  hasSavedLink
+                  currentConferenceUrl
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
                     : 'bg-slate-100 text-slate-500 dark:bg-slate-750 dark:text-slate-400'
                 }`}
@@ -203,23 +133,19 @@ export const ScheduleLessonCard: React.FC<ScheduleLessonCardProps> = ({
                 <span className="block truncate text-xs font-bold text-slate-800 dark:text-slate-200">
                   Онлайн-конференція
                 </span>
-                <span className={`mt-0.5 flex items-center gap-1 text-[10px] font-semibold ${hasSavedLink ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
-                  {hasSavedLink && <CheckCircle2 aria-hidden="true" className="h-3 w-3" />}
-                  {hasSavedLink ? 'Посилання додано' : 'Посилання не додано'}
+                <span className={`mt-0.5 flex items-center gap-1 text-[10px] font-semibold ${currentConferenceUrl ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                  {currentConferenceUrl && <CheckCircle2 aria-hidden="true" className="h-3 w-3" />}
+                  {isSharedMode ? 'Для всіх занять' : LINK_TYPE_LABELS[currentLinkType]}: {currentConferenceUrl ? 'додано' : 'не додано'}
                 </span>
               </span>
             </div>
 
             <button
               type="button"
-              onClick={() => {
-                setIsExpanded((current) => !current);
-                setConferenceError('');
-                setFeedback(null);
-              }}
+              onClick={() => setIsExpanded((current) => !current)}
               aria-expanded={isExpanded}
               aria-controls={panelId}
-              aria-label={`${isExpanded ? 'Згорнути' : 'Розгорнути'} онлайн-посилання для ${lesson.subjectName}`}
+              aria-label={`${isExpanded ? 'Згорнути' : 'Розгорнути'} онлайн-посилання для ${lesson.subjectName}. ${configuredLinksSummary}`}
               className="inline-flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-colors duration-150 hover:bg-blue-100 hover:text-blue-700 active:bg-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-slate-750 dark:text-slate-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
             >
               <ChevronDown
@@ -232,123 +158,33 @@ export const ScheduleLessonCard: React.FC<ScheduleLessonCardProps> = ({
       </div>
 
       {subject && isExpanded && (
-        <form
+        <div
           id={panelId}
-          onSubmit={handleSubmit}
-          noValidate
           className="animate-slide-up border-t border-slate-200/80 bg-white/80 p-4 dark:border-slate-700/80 dark:bg-slate-900/35 sm:p-5"
         >
-          <div className="space-y-2">
-            <label htmlFor={`${panelId}-input`} className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-              Онлайн-посилання
-            </label>
-            <div className="grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
-              <div className="relative min-w-0">
-                <Link2 aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                <input
-                  ref={inputRef}
-                  id={`${panelId}-input`}
-                  type="url"
-                  inputMode="url"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  value={conferenceInput}
-                  onChange={(event) => {
-                    setConferenceInput(event.target.value);
-                    setConferenceError('');
-                    setFeedback(null);
-                  }}
-                  onBlur={() => {
-                    if (conferenceInput.trim() && !normalizeConferenceUrl(conferenceInput)) {
-                      setConferenceError('Введіть коректне HTTP/HTTPS-посилання на конференцію.');
-                    }
-                  }}
-                  aria-invalid={Boolean(conferenceError)}
-                  aria-describedby={conferenceError ? `${panelId}-error` : `${panelId}-help`}
-                  placeholder="https://zoom.us/j/..."
-                  className={`min-h-11 w-full rounded-xl border bg-white py-2.5 pl-10 pr-3 text-base text-slate-900 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:ring-2 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600 sm:text-sm ${
-                    conferenceError
-                      ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20 dark:border-red-700'
-                      : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 dark:border-slate-700 dark:focus:border-blue-500'
-                  }`}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={handleCopy}
-                disabled={!normalizedDraft}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-50 active:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-blue-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/50"
-              >
-                <Copy aria-hidden="true" className="h-4 w-4" />
-                Копіювати
-              </button>
-
-              {normalizedDraft ? (
-                <a
-                  href={normalizedDraft}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-50 active:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-blue-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/50 dark:focus-visible:ring-offset-slate-900"
-                >
-                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
-                  Відкрити
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-blue-700 opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-blue-300"
-                >
-                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
-                  Відкрити
-                </button>
-              )}
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Онлайн-посилання</h4>
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                {isSharedMode
+                  ? 'Одна адреса для всіх типів занять'
+                  : 'Окремі адреси для лекцій і практичних занять'}
+              </p>
             </div>
-
-            {conferenceError ? (
-              <p id={`${panelId}-error`} role="alert" className="text-xs font-medium text-red-600 dark:text-red-400">
-                {conferenceError}
-              </p>
-            ) : (
-              <p id={`${panelId}-help`} className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                {hasSavedLink
-                  ? 'Змініть адресу та збережіть. Щоб видалити посилання, очистьте поле й натисніть «Зберегти».'
-                  : 'Вставте посилання Zoom, Google Meet, Microsoft Teams або іншого сервісу.'}
-              </p>
-            )}
+            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+              {isSharedMode
+                ? currentConferenceUrl ? 'Спільне посилання' : 'Не додано'
+                : `Додано ${configuredLinksCount} з 2`}
+            </span>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 border-t border-slate-200/70 pt-4 dark:border-slate-700/70 sm:flex-row sm:items-center sm:justify-between">
-            <div
-              role={feedback?.tone === 'error' ? 'alert' : 'status'}
-              aria-live={feedback?.tone === 'error' ? 'assertive' : 'polite'}
-              className={`flex min-h-5 items-center gap-2 text-xs font-semibold ${
-                feedback?.tone === 'error'
-                  ? 'text-red-600 dark:text-red-400'
-                  : feedback
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-slate-400 dark:text-slate-500'
-              }`}
-            >
-              {feedback && (
-                feedback.tone === 'error'
-                  ? <CircleAlert aria-hidden="true" className="h-4 w-4 flex-shrink-0" />
-                  : <CheckCircle2 aria-hidden="true" className="h-4 w-4 flex-shrink-0" />
-              )}
-              {feedback?.message ?? 'Посилання зберігається лише у цьому браузері.'}
-            </div>
-
-            <button
-              type="submit"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-600/20 transition-colors hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
-            >
-              <Save aria-hidden="true" className="h-4 w-4" />
-              Зберегти
-            </button>
-          </div>
-        </form>
+          <ConferenceLinksEditor
+            subject={subject}
+            links={conferenceLinks}
+            preferredType={currentLinkType}
+            onUpdateConferenceLinks={onUpdateConferenceLinks}
+          />
+        </div>
       )}
     </article>
   );

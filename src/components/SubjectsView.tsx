@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { GraduationCap, Sparkles, Layers, Video } from 'lucide-react';
 import type { INPData, INPSubject } from '../types/inp';
 import {
-  getSubjectConferenceLink,
+  getActiveConferenceLinksCount,
+  getSubjectConferenceLinks,
   type SubjectConferenceLinks,
 } from '../services/conferenceLinks';
 
@@ -84,7 +85,8 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
         <div className="space-y-3 pt-1">
           {filteredSubjects.map((subject) => {
             const isNormative = subject.category === 'normative';
-            const hasConferenceLink = Boolean(getSubjectConferenceLink(conferenceLinks, subject));
+            const subjectConferenceLinks = getSubjectConferenceLinks(conferenceLinks, subject);
+            const conferenceLinksCount = getActiveConferenceLinksCount(subjectConferenceLinks);
 
             return (
               <button
@@ -130,10 +132,12 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
                       <span className="sm:hidden text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                         {subject.credits} кр.
                       </span>
-                      {hasConferenceLink && (
+                      {conferenceLinksCount > 0 && (
                         <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
                           <Video aria-hidden="true" className="w-3 h-3" />
-                          Онлайн-посилання
+                          {subjectConferenceLinks.mode === 'shared'
+                            ? 'Онлайн: спільне'
+                            : `Онлайн ${conferenceLinksCount}/2`}
                         </span>
                       )}
                     </div>

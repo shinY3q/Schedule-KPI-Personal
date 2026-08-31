@@ -17,8 +17,11 @@ import { safeStorage } from './services/storage';
 import { normalizeINPData } from './services/inpNormalization';
 import {
   CONFERENCE_LINKS_STORAGE_KEY,
-  getSubjectConferenceLink,
+  getSubjectConferenceLinks,
   getSubjectConferenceKey,
+  normalizeConferenceLinksStorage,
+  normalizeSubjectConferenceLinkSet,
+  type SubjectConferenceLinkSet,
   type SubjectConferenceLinks,
 } from './services/conferenceLinks';
 
@@ -73,7 +76,10 @@ export function AppContent() {
   const [selectedSubject, setSelectedSubject] = useState<INPSubject | null>(null);
 
   const [conferenceLinks, setConferenceLinks] = useState<SubjectConferenceLinks>(() => {
-    return safeStorage.getJSON<SubjectConferenceLinks>(CONFERENCE_LINKS_STORAGE_KEY, {});
+    const storedLinks = safeStorage.getJSON<unknown>(CONFERENCE_LINKS_STORAGE_KEY, {});
+    const normalizedLinks = normalizeConferenceLinksStorage(storedLinks);
+    safeStorage.setJSON(CONFERENCE_LINKS_STORAGE_KEY, normalizedLinks);
+    return normalizedLinks;
   });
 
   const [autoUpdate, setAutoUpdate] = useState<boolean>(() => {
@@ -156,21 +162,18 @@ export function AppContent() {
     setIsLoggedIn(false);
   };
 
-  const handleSaveConferenceLink = (subject: INPSubject, url: string) => {
-    setConferenceLinks((current) => {
-      const next = { ...current, [getSubjectConferenceKey(subject)]: url };
-      safeStorage.setJSON(CONFERENCE_LINKS_STORAGE_KEY, next);
-      return next;
-    });
-  };
-
-  const handleRemoveConferenceLink = (subject: INPSubject) => {
+  const handleUpdateConferenceLinks = (subject: INPSubject, value: SubjectConferenceLinkSet) => {
     setConferenceLinks((current) => {
       const key = getSubjectConferenceKey(subject);
-      if (!current[key]) return current;
-
+      const normalizedLinks = normalizeSubjectConferenceLinkSet(value);
       const next = { ...current };
-      delete next[key];
+
+      if (normalizedLinks.shared || normalizedLinks.lecture || normalizedLinks.practice) {
+        next[key] = normalizedLinks;
+      } else {
+        delete next[key];
+      }
+
       safeStorage.setJSON(CONFERENCE_LINKS_STORAGE_KEY, next);
       return next;
     });
@@ -254,8 +257,7 @@ export function AppContent() {
               onSwitchWeek={setCurrentWeekNum}
               onSelectSubject={setSelectedSubject}
               conferenceLinks={conferenceLinks}
-              onSaveConferenceUrl={handleSaveConferenceLink}
-              onRemoveConferenceUrl={handleRemoveConferenceLink}
+              onUpdateConferenceLinks={handleUpdateConferenceLinks}
             />
           )}
 
@@ -293,9 +295,8 @@ export function AppContent() {
           subject={selectedSubject}
           onClose={handleCloseSubject}
           weekSchedule={activeWeekSchedule}
-          conferenceUrl={getSubjectConferenceLink(conferenceLinks, selectedSubject)}
-          onSaveConferenceUrl={handleSaveConferenceLink}
-          onRemoveConferenceUrl={handleRemoveConferenceLink}
+          conferenceLinks={getSubjectConferenceLinks(conferenceLinks, selectedSubject)}
+          onUpdateConferenceLinks={handleUpdateConferenceLinks}
         />
       )}
     </div>
