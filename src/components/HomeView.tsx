@@ -17,6 +17,7 @@ interface HomeViewProps {
   inp: INPData;
   weekSchedule: WeekSchedule;
   currentWeekNum: 1 | 2;
+  actualWeekNum: 1 | 2;
   onSwitchWeek: (week: 1 | 2) => void;
   onNavigateToSchedule: () => void;
   onNavigateToSubjects: () => void;
@@ -27,6 +28,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   inp,
   weekSchedule,
   currentWeekNum,
+  actualWeekNum,
   onSwitchWeek,
   onNavigateToSchedule,
   onNavigateToSubjects,
@@ -139,7 +141,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Поточний тиждень
+                {currentWeekNum === actualWeekNum ? 'Поточний тиждень' : 'Перегляд тижня'}
               </span>
               <CalendarDays className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
@@ -151,6 +153,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
               {weekSchedule.dateRange && (
                 <div className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                   {weekSchedule.dateRange}
+                </div>
+              )}
+              {currentWeekNum !== actualWeekNum && (
+                <div className="mt-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                  Зараз триває {actualWeekNum} тиждень
                 </div>
               )}
             </div>

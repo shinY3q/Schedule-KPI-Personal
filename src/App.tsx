@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { INPData, INPSubject } from './types/inp';
 import type { GroupScheduleRaw } from './types/schedule';
 import { Sidebar } from './components/Sidebar';
@@ -11,7 +11,7 @@ import { SettingsView } from './components/SettingsView';
 import { SubjectModal } from './components/SubjectModal';
 import { LoginView } from './components/LoginView';
 import { filterAndProcessSchedule } from './services/matcher';
-import { findGroupByName, fetchGroupSchedule, fetchCurrentWeekInfo } from './services/kpiApi';
+import { findGroupByName, fetchGroupSchedule, getCurrentWeekInfo } from './services/kpiApi';
 import { ThemeProvider } from './context/ThemeContext';
 import { safeStorage } from './services/storage';
 import { normalizeINPData } from './services/inpNormalization';
@@ -69,9 +69,9 @@ export function AppContent() {
     return (safeStorage.getItem('kpi_current_tab') as NavTab) || 'home';
   });
 
-  const [currentWeekNum, setCurrentWeekNum] = useState<1 | 2>(() => {
-    return (Number(safeStorage.getItem('kpi_current_week')) as 1 | 2) || 1;
-  });
+  const [actualWeekNum, setActualWeekNum] = useState<1 | 2>(() => getCurrentWeekInfo().currentWeek);
+  const [currentWeekNum, setCurrentWeekNum] = useState<1 | 2>(() => getCurrentWeekInfo().currentWeek);
+  const actualWeekRef = useRef<1 | 2>(actualWeekNum);
 
   const [selectedSubject, setSelectedSubject] = useState<INPSubject | null>(null);
 
@@ -114,11 +114,32 @@ export function AppContent() {
   };
 
   useEffect(() => {
-    fetchCurrentWeekInfo().then(info => {
-      setCurrentWeekNum(info.currentWeek);
-      safeStorage.setItem('kpi_current_week', String(info.currentWeek));
-    });
+    const syncCurrentWeek = () => {
+      const nextWeek = getCurrentWeekInfo().currentWeek;
+      if (nextWeek === actualWeekRef.current) return;
 
+      actualWeekRef.current = nextWeek;
+      setActualWeekNum(nextWeek);
+      setCurrentWeekNum(nextWeek);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') syncCurrentWeek();
+    };
+
+    syncCurrentWeek();
+    const timer = window.setInterval(syncCurrentWeek, 30_000);
+    window.addEventListener('focus', syncCurrentWeek);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', syncCurrentWeek);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (inpData?.group && isLoggedIn) {
       loadScheduleForGroup(inpData.group);
     }
@@ -243,6 +264,7 @@ export function AppContent() {
               inp={inpData}
               weekSchedule={activeWeekSchedule}
               currentWeekNum={currentWeekNum}
+              actualWeekNum={actualWeekNum}
               onSwitchWeek={setCurrentWeekNum}
               onNavigateToSchedule={() => setCurrentTab('schedule')}
               onNavigateToSubjects={() => setCurrentTab('subjects')}
@@ -254,6 +276,7 @@ export function AppContent() {
             <ScheduleView
               weekSchedule={activeWeekSchedule}
               currentWeekNum={currentWeekNum}
+              actualWeekNum={actualWeekNum}
               onSwitchWeek={setCurrentWeekNum}
               onSelectSubject={setSelectedSubject}
               conferenceLinks={conferenceLinks}

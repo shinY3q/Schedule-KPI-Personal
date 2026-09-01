@@ -105,30 +105,64 @@ export interface CurrentTimeInfo {
   currentLesson: number;
 }
 
-export async function fetchCurrentWeekInfo(): Promise<CurrentTimeInfo> {
-  try {
-    const res = await fetch(`${BASE_URL}/time/current`);
-    if (res.ok) {
-      const data = await res.json();
-      return {
-        currentWeek: data.currentWeek === 2 ? 2 : 1,
-        currentDay: data.currentDay || 1,
-        currentLesson: data.currentLesson || 1,
-      };
-    }
-  } catch {
-    // academic calendar calculation fallback
-  }
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-  const now = new Date();
-  const sep1 = new Date(now.getFullYear(), 8, 1);
-  const diffDays = Math.floor((now.getTime() - sep1.getTime()) / (1000 * 60 * 60 * 24));
-  const weekNum = Math.floor(diffDays / 7) + 1;
-  const isOdd = weekNum % 2 === 1;
+interface CalendarDateParts {
+  year: number;
+  month: number;
+  day: number;
+}
+
+const getKyivCalendarDate = (date: Date): CalendarDateParts => {
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Kyiv',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+    return {
+      year: Number(values.year),
+      month: Number(values.month),
+      day: Number(values.day),
+    };
+  } catch {
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+    };
+  }
+};
+
+const getMondayTimestamp = (dateTimestamp: number): number => {
+  const dayOfWeek = new Date(dateTimestamp).getUTCDay();
+  const daysSinceMonday = (dayOfWeek + 6) % 7;
+  return dateTimestamp - daysSinceMonday * DAY_IN_MS;
+};
+
+export function getCurrentWeekInfo(now: Date = new Date()): CurrentTimeInfo {
+  const currentDate = getKyivCalendarDate(now);
+  const currentDateTimestamp = Date.UTC(currentDate.year, currentDate.month - 1, currentDate.day);
+  const currentMondayTimestamp = getMondayTimestamp(currentDateTimestamp);
+  const academicYearStart = currentDate.month >= 9 ? currentDate.year : currentDate.year - 1;
+  const septemberFirstTimestamp = Date.UTC(academicYearStart, 8, 1);
+  const firstAcademicMondayTimestamp = getMondayTimestamp(septemberFirstTimestamp);
+  const academicWeekIndex = Math.floor(
+    (currentMondayTimestamp - firstAcademicMondayTimestamp) / (7 * DAY_IN_MS),
+  );
+  const currentWeek: 1 | 2 = Math.abs(academicWeekIndex % 2) === 0 ? 1 : 2;
+  const currentDay = new Date(currentDateTimestamp).getUTCDay() || 7;
 
   return {
-    currentWeek: isOdd ? 1 : 2,
-    currentDay: now.getDay() === 0 ? 7 : now.getDay(),
+    currentWeek,
+    currentDay,
     currentLesson: 1,
   };
+}
+
+export async function fetchCurrentWeekInfo(): Promise<CurrentTimeInfo> {
+  return getCurrentWeekInfo();
 }
