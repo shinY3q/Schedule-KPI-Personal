@@ -12,7 +12,24 @@ import {
   type SubjectConferenceLinkSet,
   type SubjectConferenceLinks,
 } from '../services/conferenceLinks';
+import { getCurrentWeekInfo } from '../services/kpiApi';
 import { ScheduleLessonCard } from './ScheduleLessonCard';
+
+const DAY_CODE_BY_WEEKDAY: Partial<Record<number, string>> = {
+  1: 'mon',
+  2: 'tue',
+  3: 'wed',
+  4: 'thu',
+  5: 'fri',
+  6: 'sat',
+};
+
+const getCurrentScheduleDayIndex = (days: DaySchedule[]): number => {
+  const currentDayCode = DAY_CODE_BY_WEEKDAY[getCurrentWeekInfo().currentDay];
+  const currentDayIndex = days.findIndex((day) => day.dayCode === currentDayCode);
+
+  return currentDayIndex >= 0 ? currentDayIndex : 0;
+};
 
 interface ScheduleViewProps {
   weekSchedule: WeekSchedule;
@@ -33,7 +50,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   conferenceLinks,
   onUpdateConferenceLinks,
 }) => {
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(() => (
+    getCurrentScheduleDayIndex(weekSchedule.days)
+  ));
   const [weekNotice, setWeekNotice] = useState<{
     id: number;
     message: string;
@@ -61,7 +80,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   const handleGoToCurrentWeek = () => {
     if (!isViewingCurrentWeek) {
       onSwitchWeek(actualWeekNum);
-      setSelectedDayIndex(0);
+      setSelectedDayIndex(getCurrentScheduleDayIndex(weekSchedule.days));
       setWeekNotice(null);
       return;
     }
