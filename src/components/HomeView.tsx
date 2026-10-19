@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { INPData } from '../types/inp';
 import type { WeekSchedule, ProcessedLesson } from '../types/schedule';
+import { LessonDates } from './LessonDates';
 
 interface HomeViewProps {
   inp: INPData;
@@ -330,6 +331,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug line-clamp-2">
                 {pair.subjectName}
               </div>
+              <LessonDates dates={pair.rawLesson.dates} />
 
               <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-1 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
                 <div className="flex items-center gap-1.5 truncate">

@@ -1,4 +1,5 @@
 import type { INPData } from '../types/inp';
+import { getKyivDateKey, hasUpcomingLessonDate } from './scheduleDates';
 import type {
   GroupScheduleRaw,
   KPIDaySchedule,
@@ -100,10 +101,14 @@ export function calculateEndTime(startTime: string): { timeStart: string; timeEn
       return { timeStart: '15:05', timeEnd: '16:40', pairNumber: 4 };
     case '16:10':
       return { timeStart: '16:10', timeEnd: '17:45', pairNumber: 5 };
+    case '18:05':
+      return { timeStart: '18:05', timeEnd: '19:40', pairNumber: 6 };
     case '18:30':
       return { timeStart: '18:30', timeEnd: '20:05', pairNumber: 6 };
+    case '20:00':
+      return { timeStart: '20:00', timeEnd: '21:35', pairNumber: 7 };
     default:
-      return { timeStart: cleanStart, timeEnd: '', pairNumber: 1 };
+      return { timeStart: cleanStart, timeEnd: '', pairNumber: 0 };
   }
 }
 
@@ -126,7 +131,8 @@ const DAY_MAP: Record<string, { code: string; short: string; full: string; dayIn
 export function filterAndProcessSchedule(
   rawSchedule: GroupScheduleRaw,
   inp: INPData,
-  activeSemester?: number
+  activeSemester?: number,
+  today: string = getKyivDateKey(),
 ): { week1: WeekSchedule; week2: WeekSchedule } {
   const targetSubjects = activeSemester
     ? inp.subjects.filter(s => s.semester === activeSemester)
@@ -195,7 +201,11 @@ export function filterAndProcessSchedule(
         }
       }
 
-      const lessons = [...lessonsById.values()].sort((a, b) => a.timeStart.localeCompare(b.timeStart));
+      // Match the official KPI view: keep recurring lessons and dated series with
+      // at least one occurrence today or later. Filter after merging date fragments.
+      const lessons = [...lessonsById.values()]
+        .filter((lesson) => hasUpcomingLessonDate(lesson.rawLesson.dates, today))
+        .sort((a, b) => a.timeStart.localeCompare(b.timeStart));
 
       return {
         dayCode: dayMeta.code,

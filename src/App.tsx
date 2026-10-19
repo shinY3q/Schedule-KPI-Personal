@@ -14,6 +14,7 @@ import { filterAndProcessSchedule } from './services/matcher';
 import { findGroupByName, fetchGroupSchedule, getCurrentWeekInfo } from './services/kpiApi';
 import { ThemeProvider } from './context/ThemeContext';
 import { safeStorage } from './services/storage';
+import { getKyivDateKey } from './services/scheduleDates';
 import { normalizeINPData } from './services/inpNormalization';
 import {
   CONFERENCE_LINKS_STORAGE_KEY,
@@ -72,6 +73,7 @@ export function AppContent() {
   const [actualWeekNum, setActualWeekNum] = useState<1 | 2>(() => getCurrentWeekInfo().currentWeek);
   const [currentWeekNum, setCurrentWeekNum] = useState<1 | 2>(() => getCurrentWeekInfo().currentWeek);
   const actualWeekRef = useRef<1 | 2>(actualWeekNum);
+  const [scheduleDate, setScheduleDate] = useState(() => getKyivDateKey());
 
   const [selectedSubject, setSelectedSubject] = useState<INPSubject | null>(null);
 
@@ -115,7 +117,9 @@ export function AppContent() {
 
   useEffect(() => {
     const syncCurrentWeek = () => {
-      const nextWeek = getCurrentWeekInfo().currentWeek;
+      const now = new Date();
+      setScheduleDate(getKyivDateKey(now));
+      const nextWeek = getCurrentWeekInfo(now).currentWeek;
       if (nextWeek === actualWeekRef.current) return;
 
       actualWeekRef.current = nextWeek;
@@ -230,7 +234,7 @@ export function AppContent() {
     setIsLoggedIn(false);
   };
 
-  const { week1, week2 } = filterAndProcessSchedule(rawSchedule, inpData, 7);
+  const { week1, week2 } = filterAndProcessSchedule(rawSchedule, inpData, 7, scheduleDate);
   const activeWeekSchedule = currentWeekNum === 1 ? week1 : week2;
 
   if (!isLoggedIn) {

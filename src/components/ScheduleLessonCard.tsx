@@ -18,6 +18,7 @@ import {
   type SubjectConferenceLinkSet,
 } from '../services/conferenceLinks';
 import { ConferenceLinksEditor } from './ConferenceLinksEditor';
+import { LessonDates } from './LessonDates';
 
 interface ScheduleLessonCardProps {
   lesson: ProcessedLesson;
@@ -71,9 +72,11 @@ export const ScheduleLessonCard: React.FC<ScheduleLessonCardProps> = ({
               {lesson.timeEnd ? `${lesson.timeStart} – ${lesson.timeEnd}` : lesson.timeStart}
             </span>
           </div>
-          <div className="mt-0.5 pl-5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 sm:pl-6 sm:text-[11px]">
-            {lesson.pairNumber}-а пара
-          </div>
+          {lesson.pairNumber > 0 && (
+            <div className="mt-0.5 pl-5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 sm:pl-6 sm:text-[11px]">
+              {lesson.pairNumber}-а пара
+            </div>
+          )}
         </div>
 
         <div className="min-w-0 flex-1 space-y-1.5">
@@ -115,6 +118,7 @@ export const ScheduleLessonCard: React.FC<ScheduleLessonCardProps> = ({
               <span className="min-w-0 [overflow-wrap:anywhere]">{lesson.lecturerName || 'Не вказано'}</span>
             </div>
           </div>
+          <LessonDates dates={lesson.rawLesson.dates} />
         </div>
 
         {subject && (

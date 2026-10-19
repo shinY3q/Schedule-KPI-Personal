@@ -1,4 +1,5 @@
 import type { GroupScheduleRaw, KPIGroup } from '../types/schedule';
+import { getKyivDateKey } from './scheduleDates';
 
 const BASE_URL = 'https://api.campus.kpi.ua';
 
@@ -114,27 +115,8 @@ interface CalendarDateParts {
 }
 
 const getKyivCalendarDate = (date: Date): CalendarDateParts => {
-  try {
-    const parts = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Europe/Kyiv',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).formatToParts(date);
-    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-
-    return {
-      year: Number(values.year),
-      month: Number(values.month),
-      day: Number(values.day),
-    };
-  } catch {
-    return {
-      year: date.getFullYear(),
-      month: date.getMonth() + 1,
-      day: date.getDate(),
-    };
-  }
+  const [year, month, day] = getKyivDateKey(date).split('-').map(Number);
+  return { year, month, day };
 };
 
 const getMondayTimestamp = (dateTimestamp: number): number => {

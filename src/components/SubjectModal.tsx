@@ -15,6 +15,7 @@ import {
   type SubjectConferenceLinkSet,
 } from '../services/conferenceLinks';
 import { ConferenceLinksEditor } from './ConferenceLinksEditor';
+import { LessonDates } from './LessonDates';
 
 interface SubjectModalProps {
   subject: INPSubject | null;
@@ -58,7 +59,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
 
   const hasConferenceLinks = hasActiveConferenceLinks(conferenceLinks);
 
-  const occurrences: { day: string; time: string; type: string; location: string; teacher: string }[] = [];
+  const occurrences: { day: string; time: string; type: string; location: string; teacher: string; dates: string[] }[] = [];
 
   weekSchedule.days.forEach((d) => {
     d.lessons.forEach((l) => {
@@ -72,6 +73,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
           type: l.lessonTypeLabel,
           location: l.location,
           teacher: l.lecturerName,
+          dates: l.rawLesson.dates,
         });
       }
     });
@@ -241,7 +243,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
                     key={idx}
                     className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-sm transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                   >
-                    <div>
+                    <div className="min-w-0 space-y-1">
                       <div className="font-bold text-slate-800 dark:text-slate-200 text-sm mb-1">
                         {item.day}
                       </div>
@@ -252,6 +254,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
                           {item.type}
                         </span>
                       </div>
+                      <LessonDates dates={item.dates} />
                     </div>
 
                     <div className="text-slate-500 dark:text-slate-400 sm:text-right space-y-0.5">

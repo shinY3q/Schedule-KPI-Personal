@@ -1,24 +1,14 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import ts from 'typescript';
+import { importService } from './helpers/import-service.mjs';
 
-// Both services only import types, so they can run without a browser or a new test dependency.
-async function importService(path) {
-  const source = readFileSync(new URL(path, import.meta.url), 'utf8');
-  const { outputText } = ts.transpileModule(source, {
-    compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
-  });
-  return import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
-}
-
-const { filterAndProcessSchedule } = await importService('../src/services/matcher.ts');
+const { filterAndProcessSchedule, calculateEndTime } = await importService('../../src/services/matcher.ts');
 const {
   CONFERENCE_LINKS_STORAGE_KEY,
   getSubjectConferenceKey,
   getSubjectConferenceLinks,
   getConferenceLinkFromSet,
-} = await importService('../src/services/conferenceLinks.ts');
+} = await importService('../../src/services/conferenceLinks.ts');
 
 const vrName = 'Розроблення VR/AR застосунків';
 const roboticsName = 'Інтелектуальні технологій в робототехніці';
@@ -66,7 +56,7 @@ const schedule = () => ({
   ],
 });
 
-const process = (raw) => filterAndProcessSchedule(raw, inp, 7).week2;
+const process = (raw, today = '2026-10-19') => filterAndProcessSchedule(raw, inp, 7, today).week2;
 
 test('date fragments produce one lesson with all original dates, without mutating the cache', () => {
   const raw = schedule();
@@ -142,4 +132,53 @@ test('reprocessing retains INP subjects and existing shared and separate confere
   }
   assert.equal(JSON.stringify(inp), inpBefore);
   assert.equal(JSON.stringify(storedLinks), linksBefore);
+});
+
+test('expired one-off lessons are removed on every day of both weeks', () => {
+  const days = ['Пн', 'Вв', 'Ср', 'Чт', 'Пт', 'Сб'].map((day) => ({
+    day,
+    pairs: [
+      lesson(systemsName, '08:30:00', ['2026-10-08', '2026-10-15']),
+      lesson(systemsName, '10:25:00'),
+      lesson(systemsName, '12:20:00', ['2026-11-02']),
+    ],
+  }));
+  const raw = { groupCode: '3672', scheduleFirstWeek: days, scheduleSecondWeek: days };
+  const before = JSON.stringify(raw);
+  const weeks = filterAndProcessSchedule(raw, inp, 7, '2026-10-19');
+  for (const week of Object.values(weeks)) {
+    for (const day of week.days) {
+      assert.deepEqual(day.lessons.map(({ timeStart }) => timeStart), ['10:25', '12:20']);
+    }
+  }
+  assert.equal(JSON.stringify(raw), before);
+});
+
+test('a dated lesson stays on its last date and expires the next day', () => {
+  const raw = schedule();
+  raw.scheduleSecondWeek[0].pairs = [lesson(vrName, '16:10:00', ['2026-10-05', '2026-10-19'])];
+  assert.equal(process(raw, '2026-10-19').days[0].lessons.length, 1);
+  assert.equal(process(raw, '2026-10-20').days[0].lessons.length, 0);
+});
+
+test('future date fragments survive even when another fragment has expired', () => {
+  const raw = schedule();
+  const monday = process(raw, '2026-10-20').days[0].lessons;
+  assert.equal(monday.length, 1);
+  assert.deepEqual(monday[0].rawLesson.dates,
+    ['2026-10-05', '2026-10-19', '2026-11-02', '2026-11-16']);
+  assert.equal(process(raw, '2026-11-17').days[0].lessons.length, 0);
+});
+
+test('cached lessons without a date field remain recurring', () => {
+  const raw = schedule();
+  raw.scheduleSecondWeek[0].pairs = [lesson(vrName, '14:15:00')];
+  delete raw.scheduleSecondWeek[0].pairs[0].dates;
+  assert.equal(process(raw, '2026-12-01').days[0].lessons.length, 1);
+});
+
+test('official evening slots are numbered correctly, and unknown slots do not become first pairs', () => {
+  assert.deepEqual(calculateEndTime('18:05:00'), { timeStart: '18:05', timeEnd: '19:40', pairNumber: 6 });
+  assert.deepEqual(calculateEndTime('20:00:00'), { timeStart: '20:00', timeEnd: '21:35', pairNumber: 7 });
+  assert.deepEqual(calculateEndTime('17:00:00'), { timeStart: '17:00', timeEnd: '', pairNumber: 0 });
 });
