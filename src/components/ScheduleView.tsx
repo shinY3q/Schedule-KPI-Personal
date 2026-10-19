@@ -261,7 +261,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
         {/* List of lessons */}
         {activeDay.lessons.length > 0 ? (
-          <div className="space-y-3 pt-1">
+          <div key={`${weekSchedule.weekNumber}-${activeDay.dayCode}`} className="space-y-3 pt-1">
             {activeDay.lessons.map((lesson) => (
               <ScheduleLessonCard
                 key={lesson.id}

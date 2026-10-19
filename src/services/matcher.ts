@@ -146,7 +146,7 @@ export function filterAndProcessSchedule(
         d => d.day === dayKey || d.day.startsWith(dayKey) || (DAY_MAP[d.day] && DAY_MAP[d.day].short === dayKey)
       );
 
-      const lessons: ProcessedLesson[] = [];
+      const lessonsById = new Map<string, ProcessedLesson>();
 
       if (rawDay && rawDay.pairs) {
         for (const pair of rawDay.pairs) {
@@ -157,9 +157,28 @@ export function filterAndProcessSchedule(
           if (matchedSubject) {
             const { type, label } = determineLessonType(pair.type, pair.tag);
             const { timeStart, timeEnd, pairNumber } = calculateEndTime(pair.time);
+            // The API can split one lesson into several records with different dates.
+            // Dates are occurrences, while type, teacher and room distinguish actual lessons.
+            const id = JSON.stringify([
+              weekNum, dayMeta.code, timeStart, pair.name, type, label,
+              pair.lecturer?.id || '', pair.lecturer?.name || '', pair.location || '',
+            ]);
+            const dates = Array.isArray(pair.dates) ? pair.dates : [];
+            const existing = lessonsById.get(id);
 
-            lessons.push({
-              id: `${weekNum}-${dayKey}-${pair.time}-${pair.name}`,
+            if (existing) {
+              const existingDates = existing.rawLesson.dates;
+              existing.rawLesson = {
+                ...existing.rawLesson,
+                dates: existingDates.length === 0 || dates.length === 0
+                  ? []
+                  : [...new Set([...existingDates, ...dates])].sort(),
+              };
+              continue;
+            }
+
+            lessonsById.set(id, {
+              id,
               pairNumber,
               timeStart,
               timeEnd,
@@ -170,13 +189,13 @@ export function filterAndProcessSchedule(
               location: pair.location || '',
               isMatched: true,
               matchedSubject,
-              rawLesson: pair,
+              rawLesson: { ...pair, dates: [...new Set(dates)].sort() },
             });
           }
         }
       }
 
-      lessons.sort((a, b) => a.timeStart.localeCompare(b.timeStart));
+      const lessons = [...lessonsById.values()].sort((a, b) => a.timeStart.localeCompare(b.timeStart));
 
       return {
         dayCode: dayMeta.code,
